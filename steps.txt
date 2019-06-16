@@ -16,6 +16,5 @@ Step 2
 - Downsample the image
 
 
-
-
+// sidenote
 Cross-validation = testing data with multiple
