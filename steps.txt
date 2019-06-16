@@ -1,10 +1,8 @@
 Step 1
 - Predict flower type
 - (Train a model): split data; use half to train and one half to predict
-- 
 - Use k-nearest neighbours, then SVM / decision tree(random forest)/ neural network /
 - Sklearn / any other library
-
 
 Step 2
 … using image pixels
