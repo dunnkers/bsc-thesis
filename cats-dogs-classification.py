@@ -32,35 +32,110 @@ print('labels:', np.unique(data['label']))
 import glob
 import ntpath
 import re
+from matplotlib.image import imread
 
-data_path_train_cats = './cats-dogs-dataset/training_set/cats/cat.400*.jpg'
-data_path_train_dogs = './cats-dogs-dataset/training_set/dogs/dog.400*.jpg'
-data_path_train = './cats-dogs-dataset/training_set/**/*.400*.jpg'
-data_path_test_cats = './cats-dogs-dataset/test_set/cats/cat.400*.jpg'
-data_path_test_dogs = './cats-dogs-dataset/test_set/dogs/dog.400*.jpg'
+# first 9 cats/dogs
+data_path_train = './cats-dogs-dataset/training_set/**/*.?.jpg'
+data_path_test = './cats-dogs-dataset/test_set/**/*.400*.jpg'
 
 X_train = []
+X_test = []
 y_train = []
+y_test = []
 
+# load train data
 for file in glob.glob(data_path_train):
-    X_train.append(imread(file))
-    
+    X_train.append(imread(file)) # read image
+
+    # extract label from filename
     label = re.search('^([^.]+)', ntpath.basename(file)).group(0)
     y_train.append(label)
-# images = [imread(filepath) for file in glob.glob()]
-print(X_train)
 
-#%%
+# load test data
+for file in glob.glob(data_path_test):
+    X_test.append(imread(file)) # read image
 
+    # extract label from filename
+    label = re.search('^([^.]+)', ntpath.basename(file)).group(0)
+    y_test.append(label)
 
 #%% [markdown]
 # | Sidenote; data is already split, but maybe we should let sklearn split it using train_test_split, to prevent overfit/missed training data.
 
+#%% [markdown]
+# Plot the distribution of the training / test data.
+# @from https://kapernikov.com/tutorial-image-classification-with-scikit-learn/
+
 #%%
 import matplotlib.pyplot as plt
+def plot_bar(y, loc='left', relative=True):
+    width = 0.35
+    if loc == 'left':
+        n = -0.5
+    elif loc == 'right':
+        n = 0.5
 
+    # calculate counts per type and sort, to ensure their order
+    unique, counts = np.unique(y, return_counts=True)
+    sorted_index = np.argsort(unique)
+    unique = unique[sorted_index]
+
+    if relative:
+        # plot as a percentage
+        counts = 100*counts[sorted_index]/len(y)
+        ylabel_text = '% count'
+    else:
+        # plot counts
+        counts = counts[sorted_index]
+        ylabel_text = 'count'
+
+    xtemp = np.arange(len(unique))
+
+    plt.bar(xtemp + n*width, counts, align='center', alpha=.7, width=width)
+    plt.xticks(xtemp, unique)
+    plt.xlabel('entity type')
+    plt.ylabel(ylabel_text)
+
+plt.suptitle('relative amount of photos per type')
+plot_bar(y_train, loc='left')
+plot_bar(y_test, loc='right')
+plt.legend([
+    'train ({0} photos)'.format(len(y_train)),
+    'test ({0} photos)'.format(len(y_test))
+])
+
+#%% [markdown]
+# Computing Histograms of Oriented Gradients (HOG's)
 
 #%%
+from skimage.feature import hog
+from skimage.transform import rescale
+import skimage
+
+im = X_train[0]
+im = skimage.color.rgb2gray(im)
+im = rescale(im, 1/3, 0, 'reflect', True, False, False) # make smaller
+hog, hog_img = hog(
+    im, pixels_per_cell=(12, 12),
+    cells_per_block=(2,2),
+    orientations=8,
+    visualize=True,
+    block_norm='L2-Hys')
+
+# plotting...
+fig, ax = plt.subplots(1,2)
+fig.set_size_inches(8,6)
+# remove ticks and their labels
+[a.tick_params(bottom=False, left=False, labelbottom=False, labelleft=False)
+    for a in ax]
+ax[0].imshow(im, cmap='gray')
+ax[0].set_title('im')
+ax[1].imshow(hog_img, cmap='gray')
+ax[1].set_title('hog_img')
+plt.show()
+
+print('number of pixels: ', im.shape[0] * im.shape[1])
+print('number of hog features: ', hog.shape[0])
 
 
 #%% [markdown]
