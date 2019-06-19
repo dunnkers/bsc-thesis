@@ -112,31 +112,42 @@ from skimage.feature import hog
 from skimage.transform import rescale
 import skimage
 
-im = X_train[0]
-im = skimage.color.rgb2gray(im)
-im = rescale(im, 1/3, 0, 'reflect', True, False, False) # make smaller
-hog, hog_img = hog(
-    im, pixels_per_cell=(12, 12),
-    cells_per_block=(2,2),
-    orientations=8,
-    visualize=True,
-    block_norm='L2-Hys')
+def prepare(image):
+    image = skimage.color.rgb2gray(image)
+    image = rescale(image, 1/3, 0, 'reflect', True, False, False) # make smaller
+    return hog(
+        image, pixels_per_cell=(12, 12),
+        cells_per_block=(2,2),
+        orientations=8,
+        visualize=True,
+        block_norm='L2-Hys')
+
+# map train data
+img_show_idx = 0
+im_original = X_train[img_show_idx]
+X_train_hogged_images = []
+def mapPrepare(image):
+    hogged, hogged_image = prepare(image)
+    X_train_hogged_images.append(hogged_image)
+    return image;
+X_train = list(map(mapPrepare, X_train))
 
 # plotting...
+im_hogged = X_train_hogged_images[img_show_idx]
+hog = X_train[img_show_idx]
 fig, ax = plt.subplots(1,2)
 fig.set_size_inches(8,6)
 # remove ticks and their labels
 [a.tick_params(bottom=False, left=False, labelbottom=False, labelleft=False)
     for a in ax]
-ax[0].imshow(im, cmap='gray')
+ax[0].imshow(im_original, cmap='gray')
 ax[0].set_title('im')
-ax[1].imshow(hog_img, cmap='gray')
+ax[1].imshow(im_hogged, cmap='gray')
 ax[1].set_title('hog_img')
 plt.show()
 
-print('number of pixels: ', im.shape[0] * im.shape[1])
+print('number of pixels: ', im_original.shape[0] * im_original.shape[1])
 print('number of hog features: ', hog.shape[0])
-
 
 #%% [markdown]
 # Inspired by
