@@ -112,25 +112,23 @@ from skimage.feature import hog
 from skimage.transform import rescale
 import skimage
 
+# map train data
+img_show_idx = 0
+im_original = X_train[img_show_idx]
+X_train_hogged_images = []
 def prepare(image):
     image = skimage.color.rgb2gray(image)
     image = rescale(image, 1/3, 0, 'reflect', True, False, False) # make smaller
-    return hog(
+    hogged, hogged_image = hog(
         image, pixels_per_cell=(12, 12),
         cells_per_block=(2,2),
         orientations=8,
         visualize=True,
         block_norm='L2-Hys')
-
-# map train data
-img_show_idx = 0
-im_original = X_train[img_show_idx]
-X_train_hogged_images = []
-def mapPrepare(image):
-    hogged, hogged_image = prepare(image)
     X_train_hogged_images.append(hogged_image)
-    return image;
-X_train = list(map(mapPrepare, X_train))
+    return hogged;
+
+X_train = list(map(prepare, X_train))
 
 # plotting...
 im_hogged = X_train_hogged_images[img_show_idx]
