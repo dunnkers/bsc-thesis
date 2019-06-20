@@ -105,7 +105,9 @@ plt.legend([
 ])
 
 #%% [markdown]
-# Computing Histograms of Oriented Gradients (HOG's)
+# Transform and compute Histograms of Oriented Gradients (HOG's)
+# @FIXME Use StandardScaler and other trnasformations instead of
+# doing it yourself.
 
 #%%
 from skimage.feature import hog
@@ -113,8 +115,6 @@ from skimage.transform import rescale
 import skimage
 
 # map train data
-img_show_idx = 0
-im_original = X_train[img_show_idx]
 X_train_hogged_images = []
 def prepare(image):
     image = skimage.color.rgb2gray(image)
@@ -126,13 +126,17 @@ def prepare(image):
         visualize=True,
         block_norm='L2-Hys')
     X_train_hogged_images.append(hogged_image)
-    return hogged;
+    return hogged
+# X_train_prepared = list(map(prepare, X_train)) # [XXX]
 
-X_train = list(map(prepare, X_train))
-
-# plotting...
-im_hogged = X_train_hogged_images[img_show_idx]
-hog = X_train[img_show_idx]
+#%% [markdown]
+# Create a plot of a selected datasample. Plot normal image vs hog.
+img_show_idx = 3
+im_original = X_train[img_show_idx]
+hog = prepare(X_train[img_show_idx])
+im_hogged = X_train_hogged_images[0]
+# im_hogged = X_train_hogged_images[img_show_idx] # [XXX]
+# hog = X_train_prepared[img_show_idx] # [XXX]
 fig, ax = plt.subplots(1,2)
 fig.set_size_inches(8,6)
 # remove ticks and their labels
@@ -143,9 +147,65 @@ ax[0].set_title('im')
 ax[1].imshow(im_hogged, cmap='gray')
 ax[1].set_title('hog_img')
 plt.show()
-
+# print the original amount of pixels vs hog features.
 print('number of pixels: ', im_original.shape[0] * im_original.shape[1])
 print('number of hog features: ', hog.shape[0])
+
+
+#%% [markdown]
+# Transformations & HOG computation
+from sklearn.preprocessing import StandardScaler
+from sklearn.base import BaseEstimator, TransformerMixin
+import skimage
+
+class RGB2GrayTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return np.array([skimage.color.rgb2gray(img) for img in X])
+
+class HogTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        def local_hog(X):
+            return hog(X, pixels_per_cell=(12, 12),
+                cells_per_block=(2,2),
+                orientations=8,
+                visualize=True,
+                block_norm='L2-Hys')
+
+        try: # parallel
+            return np.array([local_hog(img) for img in X])
+        except:
+            return np.array([local_hog(img) for img in X])
+            
+# create an instance of each transformer
+grayify = RGB2GrayTransformer()
+hogify = HogTransformer()
+scalify = StandardScaler()
+
+# call fit_transform on each transform converting X_train step by step
+X_train_gray = grayify.fit_transform(X_train)
+X_train_hog = hogify.fit_transform(X_train_gray)
+X_train_prepared = scalify.fit_transform(X_train_hog)
+print(X_train_prepared.shape)
+
+#%% [markdown]
+# Train a classifier. We are using Stochastic Gradient Descent.
+
+#%%
+from sklearn.linear_model import SGDClassifier
+sgd_clf = SGDClassifier(random_state=42, max_iter=1000, tol=1e-3)
+sgd_clf.fit(X_train_prepared, y_train)
 
 #%% [markdown]
 # Inspired by
