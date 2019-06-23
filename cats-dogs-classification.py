@@ -105,9 +105,7 @@ plt.legend([
 ])
 
 #%% [markdown]
-# Transform and compute Histograms of Oriented Gradients (HOG's)
-# @FIXME Use StandardScaler and other trnasformations instead of
-# doing it yourself.
+# Compute an example transformation and HOG. Create a plot of a selected datasample. Plot normal image vs hog.
 
 #%%
 from skimage.feature import hog
@@ -119,24 +117,16 @@ X_train_hogged_images = []
 def prepare(image):
     image = skimage.color.rgb2gray(image)
     image = rescale(image, 1/3, 0, 'reflect', True, False, False) # make smaller
-    hogged, hogged_image = hog(
+    return hog(
         image, pixels_per_cell=(12, 12),
         cells_per_block=(2,2),
         orientations=8,
         visualize=True,
         block_norm='L2-Hys')
-    X_train_hogged_images.append(hogged_image)
-    return hogged
-# X_train_prepared = list(map(prepare, X_train)) # [XXX]
 
-#%% [markdown]
-# Create a plot of a selected datasample. Plot normal image vs hog.
-img_show_idx = 3
+img_show_idx = 2
 im_original = X_train[img_show_idx]
-hog = prepare(X_train[img_show_idx])
-im_hogged = X_train_hogged_images[0]
-# im_hogged = X_train_hogged_images[img_show_idx] # [XXX]
-# hog = X_train_prepared[img_show_idx] # [XXX]
+testhog, im_hogged = prepare(X_train[img_show_idx])
 fig, ax = plt.subplots(1,2)
 fig.set_size_inches(8,6)
 # remove ticks and their labels
@@ -149,7 +139,7 @@ ax[1].set_title('hog_img')
 plt.show()
 # print the original amount of pixels vs hog features.
 print('number of pixels: ', im_original.shape[0] * im_original.shape[1])
-print('number of hog features: ', hog.shape[0])
+print('number of hog features: ', testhog.shape[0])
 
 
 #%% [markdown]
@@ -187,7 +177,7 @@ class HogTransformer(BaseEstimator, TransformerMixin):
             return np.array([local_hog(img) for img in X])
         except:
             return np.array([local_hog(img) for img in X])
-            
+
 # create an instance of each transformer
 grayify = RGB2GrayTransformer()
 hogify = HogTransformer()
@@ -197,6 +187,7 @@ scalify = StandardScaler()
 X_train_gray = grayify.fit_transform(X_train)
 X_train_hog = hogify.fit_transform(X_train_gray)
 X_train_prepared = scalify.fit_transform(X_train_hog)
+# X_train_prepared = X_train_hog
 print(X_train_prepared.shape)
 
 #%% [markdown]
