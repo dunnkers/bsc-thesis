@@ -35,8 +35,8 @@ import re
 from matplotlib.image import imread
 
 # first 9 cats/dogs
-data_path_train = './cats-dogs-dataset/training_set/**/*.?.jpg'
-data_path_test = './cats-dogs-dataset/test_set/**/*.400*.jpg'
+data_path_train = './cats-dogs-dataset/training_set/**/*.??.jpg'
+data_path_test = './cats-dogs-dataset/test_set/**/*.40**.jpg'
 
 X_train = []
 X_test = []
