@@ -146,6 +146,7 @@ print('number of hog features: ', testhog.shape[0])
 # Transformations & HOG computation
 from sklearn.preprocessing import StandardScaler
 from sklearn.base import BaseEstimator, TransformerMixin
+from skimage.transform import resize, downscale_local_mean
 import skimage
 
 class RGB2GrayTransformer(BaseEstimator, TransformerMixin):
@@ -167,10 +168,9 @@ class HogTransformer(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         def local_hog(X):
-            return hog(X, pixels_per_cell=(12, 12),
+            return hog(X, pixels_per_cell=(8, 8),
                 cells_per_block=(2,2),
-                orientations=8,
-                visualize=True,
+                orientations=9,
                 block_norm='L2-Hys')
 
         try: # parallel
@@ -178,17 +178,43 @@ class HogTransformer(BaseEstimator, TransformerMixin):
         except:
             return np.array([local_hog(img) for img in X])
 
+class ResizeTransform(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return np.array([resize(img, (100, 100)) for img in X])
+
+class DownSamplerTransform(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return np.array([downscale_local_mean(img, (4, 4)) for img in X])
+
+
 # create an instance of each transformer
 grayify = RGB2GrayTransformer()
 hogify = HogTransformer()
+resizer = ResizeTransform()
+downSampler = DownSamplerTransform()
 scalify = StandardScaler()
+
 
 # call fit_transform on each transform converting X_train step by step
 X_train_gray = grayify.fit_transform(X_train)
-X_train_hog = hogify.fit_transform(X_train_gray)
+X_train_resized = resizer.fit_transform(X_train_gray)
+X_train_down_sampled = resizer.fit_transform(X_train_resized)
+X_train_hog = hogify.fit_transform(X_train_down_sampled)
 X_train_prepared = scalify.fit_transform(X_train_hog)
 # X_train_prepared = X_train_hog
-print(X_train_prepared.shape)
+print(X_train_hog.shape)
 
 #%% [markdown]
 # Train a classifier. We are using Stochastic Gradient Descent.
@@ -197,6 +223,24 @@ print(X_train_prepared.shape)
 from sklearn.linear_model import SGDClassifier
 sgd_clf = SGDClassifier(random_state=42, max_iter=1000, tol=1e-3)
 sgd_clf.fit(X_train_prepared, y_train)
+
+
+#%% [markdown]
+# Now go for real! Transform data and predict.
+
+#%%
+X_test_gray = grayify.transform(X_test)
+X_test_resized = resizer.transform(X_test)
+X_test_down_sampled = resizer.transform(X_test_resized)
+X_test_hog = hogify.transform(X_test_down_sampled)
+X_test_prepared = scalify.transform(X_test_hog)
+
+y_pred = sgd_clf.predict(X_test_prepared)
+print(np.array(y_pred == y_test))
+print('')
+print('Percentage correct: ', 100*np.sum(y_pred == y_test)/len(y_test))
+
+
 
 #%% [markdown]
 # Inspired by
