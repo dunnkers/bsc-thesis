@@ -21,7 +21,7 @@ print('sklearn: {}'.format(sklearn.__version__))
 
 #%%
 columns = ['sepal-length', 'sepal-width', 'petal-length', 'petal-width', 'class']
-dataset = pandas.read_csv('./iris.data', names = columns);
+dataset = pandas.read_csv('./iris.data', names = columns)
 dataset.sample(5)
 
 #%% [markdown]
