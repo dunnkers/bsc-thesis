@@ -213,8 +213,7 @@ X_train_resized = resizer.fit_transform(X_train_gray)
 X_train_down_sampled = resizer.fit_transform(X_train_resized)
 X_train_hog = hogify.fit_transform(X_train_down_sampled)
 X_train_prepared = scalify.fit_transform(X_train_hog)
-# X_train_prepared = X_train_hog
-print(X_train_hog.shape)
+print(X_train_prepared.shape)
 
 #%% [markdown]
 # Train a classifier. We are using Stochastic Gradient Descent.
