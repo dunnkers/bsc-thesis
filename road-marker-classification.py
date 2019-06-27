@@ -58,7 +58,6 @@ pyplot.show()
 
 #%%
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler, Normalizer, StandardScaler
 from sklearn.base import BaseEstimator, TransformerMixin
 from skimage.color import rgb2gray
 from skimage.transform import resize
@@ -82,17 +81,6 @@ def gray(image, visualize=False):
     else:
         return feature_vector
 
-def unitize(image, visualize=False):
-    feature_vector = image.flatten()
-
-    if visualize:
-        return feature_vector, image
-    else:
-        return feature_vector
-
-def reconstruct_image(feature_vector, shape):
-    return np.reshape(feature_vector, shape)
-
 class FlattenTransformer(BaseEstimator, TransformerMixin):
     def __init__(self):
         pass
@@ -113,10 +101,11 @@ class RGB2GrayTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X, y = None):
         return [gray(img) for img in X]
 
+
 # Transform Ground Truth
 grayify = RGB2GrayTransformer()
 gt_transformed = grayify.fit_transform(gt)
-
+# > visualize
 _, gt_im = gray(gt[0], visualize=True)
 print('Ground truth:\tshape {}'.format(
         gt_im.shape
@@ -126,27 +115,11 @@ imshow(gt_im)
 ax_hist = pyplot.subplot(2, 3, 4)
 ax_hist.hist(gt_im.ravel(), bins=32)
 
-# # (!) needs a feature vector to work..
-# print(scaler.fit(sv))
-# print(scaler.data_max_)
-# print(scaler.transform(sv))
-# normalize = Normalizer()
-# sv_transformed = normalize.fit_transform(sv)
-
-
-# scaler = MinMaxScaler()
-# standardizer = StandardScaler()
-# flatten = FlattenTransformer()
-# sv_flattened = flatten.fit_transform(sv)
-# sv_normalized = scaler.fit_transform([sv_flattened[0]])
-# _, sv_im = unitize(sv[0], visualize=True)
-
-
 
 # Transform supervised
 resizer = ResizeTransform()
 sv_resized = resizer.fit_transform(sv)
-
+# > visualize
 sv_im = sv_resized[0]
 print('Supervised:\tshape {}'.format(
         sv_im.shape
@@ -157,10 +130,10 @@ ax_hist = pyplot.subplot(2, 3, 5)
 ax_hist.hist(sv_im.ravel(), bins=256)
 
 
-
 # Transform unsupervised
 usv_resized = resizer.fit_transform(usv)
 usv_im = usv_resized[0]
+# > visualize
 print('Unsupervised:\tshape {}'.format(
         usv_im.shape
     ))
