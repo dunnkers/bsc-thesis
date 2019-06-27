@@ -54,3 +54,36 @@ print('Unsupervised:\tshape {}\tmin,max({}, {})'.format(
 # Transform image data into feature vectors.
 
 #%%
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.base import BaseEstimator, TransformerMixin
+
+class gtTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y = None):
+        return self
+
+    def to_feature_vector(self, img):
+        # Use np.vectorize?
+        return None
+
+    def to_feature(self, x):
+        return None
+    
+    def transform(self, X, y = None):
+        return np.array([
+                self.to_feature_vector(img) for img in X
+            ])
+        # return np.array([) for img in X])
+
+gtTransformer = gtTransformer()
+gtTransformer.fit_transform(gt)
+
+# scaler = MinMaxScaler()
+# print(scaler.fit(gt))
+# print(scaler.data_max_)
+# print(scaler.transform(gt))
+
+print('End of program stub.')
