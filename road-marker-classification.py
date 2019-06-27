@@ -5,6 +5,8 @@
 #%%
 from skimage.io import imread_collection
 
+SIZE_NORMAL_SHAPE = (1400, 700) # .. or dynamically compute
+
 # Ground truth
 gt = imread_collection('./data/groundtruth/image?.png', False)
 # Supervised
@@ -23,7 +25,7 @@ print('gt size: {}, sv size: {}, usv size: {}'.format(
 from matplotlib import pyplot
 from skimage.io import imshow
 
-print('Raw image data:')
+print('Raw image data for index = 0:')
 
 pyplot.subplot(2, 3, 1).set_title("Ground truth")
 imshow(gt[0])
@@ -59,6 +61,17 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler, Normalizer, StandardScaler
 from sklearn.base import BaseEstimator, TransformerMixin
 from skimage.color import rgb2gray
+from skimage.transform import resize
+
+class ResizeTransform(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return np.array([resize(img, SIZE_NORMAL_SHAPE) for img in X])
 
 def gray(image, visualize=False):
     grayscale_image = rgb2gray(image)
@@ -100,6 +113,7 @@ class RGB2GrayTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X, y = None):
         return [gray(img) for img in X]
 
+# Transform Ground Truth
 grayify = RGB2GrayTransformer()
 gt_transformed = grayify.fit_transform(gt)
 
@@ -107,10 +121,10 @@ _, gt_im = gray(gt[0], visualize=True)
 print('Ground truth:\tshape {}'.format(
         gt_im.shape
     ))
-pyplot.subplot(2, 2, 1).set_title("Ground truth")
+pyplot.subplot(2, 3, 1).set_title("Ground truth")
 imshow(gt_im)
-ax_hist = pyplot.subplot(2, 2, 3)
-ax_hist.hist(gt_im.ravel(), bins=256)
+ax_hist = pyplot.subplot(2, 3, 4)
+ax_hist.hist(gt_im.ravel(), bins=32)
 
 # # (!) needs a feature vector to work..
 # print(scaler.fit(sv))
@@ -119,20 +133,42 @@ ax_hist.hist(gt_im.ravel(), bins=256)
 # normalize = Normalizer()
 # sv_transformed = normalize.fit_transform(sv)
 
-scaler = MinMaxScaler()
-standardizer = StandardScaler()
-flatten = FlattenTransformer()
-sv_flattened = flatten.fit_transform(sv)
-sv_normalized = scaler.fit_transform([sv_flattened[0]])
-_, sv_im = unitize(sv[0], visualize=True)
-print('Ground truth:\tshape {}'.format(
+
+# scaler = MinMaxScaler()
+# standardizer = StandardScaler()
+# flatten = FlattenTransformer()
+# sv_flattened = flatten.fit_transform(sv)
+# sv_normalized = scaler.fit_transform([sv_flattened[0]])
+# _, sv_im = unitize(sv[0], visualize=True)
+
+
+
+# Transform supervised
+resizer = ResizeTransform()
+sv_resized = resizer.fit_transform(sv)
+
+sv_im = sv_resized[0]
+print('Supervised:\tshape {}'.format(
         sv_im.shape
     ))
-pyplot.subplot(2, 2, 2).set_title("Supervised")
+pyplot.subplot(2, 3, 2).set_title("Supervised")
 imshow(sv_im)
-ax_hist = pyplot.subplot(2, 2, 4)
+ax_hist = pyplot.subplot(2, 3, 5)
 ax_hist.hist(sv_im.ravel(), bins=256)
 
-print('End of program stub.')
+
+
+# Transform unsupervised
+usv_resized = resizer.fit_transform(usv)
+usv_im = usv_resized[0]
+print('Unsupervised:\tshape {}'.format(
+        usv_im.shape
+    ))
+pyplot.subplot(2, 3, 3).set_title("Unsupervised")
+imshow(usv_im)
+ax_hist = pyplot.subplot(2, 3, 6)
+ax_hist.hist(usv_im.ravel(), bins=32)
+
 
 #%%
+print('End of program stub.')
