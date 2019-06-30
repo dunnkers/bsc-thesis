@@ -72,25 +72,6 @@ class ResizeTransform(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         return np.array([resize(img, SIZE_NORMAL_SHAPE) for img in X])
 
-def gray(image, visualize=False):
-    grayscale_image = rgb2gray(image)
-    feature_vector = grayscale_image.flatten()
-
-    if visualize:
-        return feature_vector, grayscale_image
-    else:
-        return feature_vector
-
-class FlattenTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self):
-        pass
-
-    def fit(self, X, y = None):
-        return self
-    
-    def transform(self, X, y = None):
-        return [img.ravel() for img in X]
-
 class RGB2GrayTransformer(BaseEstimator, TransformerMixin):
     def __init__(self):
         pass
@@ -99,49 +80,72 @@ class RGB2GrayTransformer(BaseEstimator, TransformerMixin):
         return self
     
     def transform(self, X, y = None):
-        return [gray(img) for img in X]
+        return [rgb2gray(img) for img in X]
 
+resizer = ResizeTransform()
+grayify = RGB2GrayTransformer()
 
 # Transform Ground Truth
-grayify = RGB2GrayTransformer()
 gt_transformed = grayify.fit_transform(gt)
-# > visualize
-_, gt_im = gray(gt[0], visualize=True)
-print('Ground truth:\tshape {}'.format(
-        gt_im.shape
-    ))
-pyplot.subplot(2, 3, 1).set_title("Ground truth")
-imshow(gt_im)
-ax_hist = pyplot.subplot(2, 3, 4)
-ax_hist.hist(gt_im.ravel(), bins=32)
-
-
+gt_resized = resizer.fit_transform(gt_transformed)
 # Transform supervised
-resizer = ResizeTransform()
 sv_resized = resizer.fit_transform(sv)
-# > visualize
-sv_im = sv_resized[0]
-print('Supervised:\tshape {}'.format(
-        sv_im.shape
-    ))
-pyplot.subplot(2, 3, 2).set_title("Supervised")
-imshow(sv_im)
-ax_hist = pyplot.subplot(2, 3, 5)
-ax_hist.hist(sv_im.ravel(), bins=256)
-
-
 # Transform unsupervised
 usv_resized = resizer.fit_transform(usv)
-usv_im = usv_resized[0]
-# > visualize
+
+
+#%% [markdown]
+# Inspect new, resized and rescaled image data. Data is now in range
+# of 0 to 1.
+
+#%%
+print('Prepared image data for index = 0:')
+
+print('Ground truth:\tshape {}'.format(
+        gt_resized[0].shape
+    ))
+pyplot.subplot(2, 3, 1).set_title("Ground truth")
+imshow(gt_resized[0])
+ax_hist = pyplot.subplot(2, 3, 4)
+ax_hist.hist(gt_resized[0].ravel(), bins=32)
+
+print('Supervised:\tshape {}'.format(
+        sv_resized[0].shape
+    ))
+pyplot.subplot(2, 3, 2).set_title("Supervised")
+imshow(sv_resized[0])
+ax_hist = pyplot.subplot(2, 3, 5)
+ax_hist.hist(sv_resized[0].ravel(), bins=256)
+
 print('Unsupervised:\tshape {}'.format(
-        usv_im.shape
+        usv_resized[0].shape
     ))
 pyplot.subplot(2, 3, 3).set_title("Unsupervised")
-imshow(usv_im)
+imshow(usv_resized[0])
 ax_hist = pyplot.subplot(2, 3, 6)
-ax_hist.hist(usv_im.ravel(), bins=32)
+ax_hist.hist(usv_resized[0].ravel(), bins=32)
 
+pyplot.show()
+
+
+#%% [markdown]
+# Combine two approaches into a feature-vector.
+
+#%%
+# @FIXME should probably be a sklearn transformation of sorts.
+def combine(sv_img, usv_img):
+    return np.array([
+        (sv_pixel, usv_pixel)
+        for sv_pixel, usv_pixel in zip(sv_img.flatten(), usv_img.flatten())
+    ])
+
+X_train = np.array([
+    combine(sv_img, usv_img)
+        for sv_img, usv_img in zip(sv_resized, usv_resized)
+    ])
+
+print('X_train shape: (per-pixel 2-feature vector)')
+print(X_train.shape)
 
 #%%
 print('End of program stub.')
