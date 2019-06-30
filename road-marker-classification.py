@@ -39,45 +39,26 @@ print('gt_test size: {}, sv_test size: {}, usv_test size: {}'.format(
 from matplotlib import pyplot
 from skimage.io import imshow
 
-print('Raw image data for training sample at index = 0:')
-
-def plotImgWithHist(title, img, idx, cols=3):
-    pyplot.subplot(2, cols, 1).set_title(title)
-    imshow(img)
-    ax_hist = pyplot.subplot(2, cols, cols + idx)
-    ax_hist.hist(img.ravel(), bins=256)
+def plotImgColumn(title, img, idx, cols=3, hist=True):
     print('{}:\tshape={}\tminmax=({}, {})'.format(
-            title, img.shape, img.min(), img.max()
-        ))
+            title, img.shape, img.min(), img.max()))
+    rows = 2 if hist else 1
+    pyplot.subplot(rows, cols, idx).set_title(title)
+    imshow(img)
+    if hist:    
+        ax_hist = pyplot.subplot(rows, cols, cols + idx, label=title)
+        ax_hist.hist(img.ravel(), bins=128)
 
-plotImgWithHist("Ground truth", gt[0], 1)
-plotImgWithHist("Supervised", sv[0], 2)
-plotImgWithHist("Unsupervised", usv[0], 3)
+print('Raw image data for training sample at index = 0:')
+plotImgColumn("Ground truth", gt[0], 1)
+plotImgColumn("Supervised", sv[0], 2)
+plotImgColumn("Unsupervised", usv[0], 3)
+pyplot.show()
 
-# pyplot.subplot(2, 3, 1).set_title("Ground truth")
-# imshow(gt[0])
-# ax_hist = pyplot.subplot(2, 3, 4)
-# ax_hist.hist(gt[0].ravel(), bins=256)
-# print('Ground truth:\tshape={}\tminmax=({}, {})'.format(
-#         gt[0].shape, gt[0].min(), gt[0].max()
-#     ))
-
-# pyplot.subplot(2, 3, 2).set_title("Supervised")
-# imshow(sv[0])
-# ax_hist = pyplot.subplot(2, 3, 5)
-# ax_hist.hist(sv[0].ravel(), bins=256)
-# print('Supervised:\tshape={}\tminmax=({}, {})'.format(
-#         sv[0].shape, sv[0].min(), sv[0].max()
-#     ))
-
-# pyplot.subplot(2, 3, 3).set_title("Unsupervised")
-# imshow(usv[0])
-# ax_hist = pyplot.subplot(2, 3, 6)
-# ax_hist.hist(usv[0].ravel(), bins=256)
-# print('Unsupervised:\tshape={}\tminmax=({}, {})'.format(
-#         usv[0].shape, usv[0].min(), usv[0].max()
-#     ))
-
+print('Raw image data for training sample at index = 4:')
+plotImgColumn("Ground truth", gt[4], 1)
+plotImgColumn("Supervised", sv[4], 2)
+plotImgColumn("Unsupervised", usv[4], 3)
 pyplot.show()
 
 #%% [markdown]
@@ -166,26 +147,16 @@ usv_resized_test = resizer.transform(usv_test)
 # of 0 to 1.
 
 #%%
-print('Prepared training image data for index = 0:')
+print('Prepared image data for training sample at index = 0:')
+plotImgColumn("Ground truth", gt_prepared[0], 1, hist=False)
+plotImgColumn("Supervised", sv_prepared[0], 2, hist=False)
+plotImgColumn("Unsupervised", usv_prepared[0], 3, hist=False)
+pyplot.show()
 
-pyplot.subplot(1, 3, 1).set_title("Ground truth")
-imshow(gt_prepared[0])
-print('Ground truth:\tshape={}\tminmax=({}, {})'.format(
-        gt_prepared[0].shape, gt_prepared[0].min(), gt_prepared[0].max()
-    ))
-
-pyplot.subplot(1, 3, 2).set_title("Supervised")
-imshow(sv_prepared[0])
-print('Supervised:\tshape={}\tminmax=({}, {})'.format(
-        sv_prepared[0].shape, sv_prepared[0].min(), sv_prepared[0].max()
-    ))
-
-pyplot.subplot(1, 3, 3).set_title("Unsupervised")
-imshow(usv_prepared[0])
-print('Unsupervised:\tshape={}\tminmax=({}, {})'.format(
-        usv_prepared[0].shape, usv_prepared[0].min(), usv_prepared[0].max()
-    ))
-
+print('Prepared image data for training sample at index = 4:')
+plotImgColumn("Ground truth", gt_prepared[4], 1, hist=False)
+plotImgColumn("Supervised", sv_prepared[4], 2, hist=False)
+plotImgColumn("Unsupervised", usv_prepared[4], 3, hist=False)
 pyplot.show()
 
 #%% [markdown]
