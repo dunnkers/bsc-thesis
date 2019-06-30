@@ -5,8 +5,10 @@
 #%%
 from skimage.io import imread_collection
 
-SIZE_NORMAL_SHAPE = (1400, 700) # .. or dynamically compute
+# @FIXME or dynamically compute? analyze average image size?
+SIZE_NORMAL_SHAPE = (1400, 700)
 
+## Training
 # Ground truth
 gt = imread_collection('./data/groundtruth/image?.png', False)
 # Supervised
@@ -18,6 +20,18 @@ print('gt size: {}, sv size: {}, usv size: {}'.format(
         gt.data.size, sv.data.size, usv.data.size
     ))
 
+## Testing
+# Ground truth
+gt_test = imread_collection('./data/groundtruth/image1?.png', False)
+# Supervised
+sv_test = imread_collection('./data/supervised/image1?.png', False)
+# Unsupervised
+usv_test = imread_collection('./data/unsupervised/output/output_image1?.png', False)
+
+print('gt_test size: {}, sv_test size: {}, usv_test size: {}'.format(
+        gt_test.data.size, sv_test.data.size, usv_test.data.size
+    ))
+
 #%% [markdown]
 # Plot an image of each data type.
 
@@ -25,7 +39,7 @@ print('gt size: {}, sv size: {}, usv size: {}'.format(
 from matplotlib import pyplot
 from skimage.io import imshow
 
-print('Raw image data for index = 0:')
+print('Raw image data for training sample at index = 0:')
 
 pyplot.subplot(2, 3, 1).set_title("Ground truth")
 imshow(gt[0])
@@ -54,7 +68,7 @@ print('Unsupervised:\tshape {}\tmin,max({}, {})'.format(
 pyplot.show()
 
 #%% [markdown]
-# Transform image data into feature vectors.
+# Transform image data: convert to grayscale, resize, rescale.
 
 #%%
 import numpy as np
@@ -85,6 +99,7 @@ class RGB2GrayTransformer(BaseEstimator, TransformerMixin):
 resizer = ResizeTransform()
 grayify = RGB2GrayTransformer()
 
+## Training
 # Transform Ground Truth
 gt_transformed = grayify.fit_transform(gt)
 gt_resized = resizer.fit_transform(gt_transformed)
@@ -93,13 +108,21 @@ sv_resized = resizer.fit_transform(sv)
 # Transform unsupervised
 usv_resized = resizer.fit_transform(usv)
 
+## Testing
+# Transform Ground Truth
+gt_transformed_test = grayify.transform(gt_test)
+gt_resized_test = resizer.transform(gt_transformed_test)
+# Transform supervised
+sv_resized_test = resizer.transform(sv_test)
+# Transform unsupervised
+usv_resized_test = resizer.transform(usv_test)
 
 #%% [markdown]
 # Inspect new, resized and rescaled image data. Data is now in range
 # of 0 to 1.
 
 #%%
-print('Prepared image data for index = 0:')
+print('Prepared training image data for index = 0:')
 
 print('Ground truth:\tshape {}'.format(
         gt_resized[0].shape
@@ -133,19 +156,42 @@ pyplot.show()
 
 #%%
 # @FIXME should probably be a sklearn transformation of sorts.
-def combine(sv_img, usv_img):
+""" Combine 2D image pixel values into a tupled flat array. """
+def combineImage(imgA, imgB):
     return np.array([
-        (sv_pixel, usv_pixel)
-        for sv_pixel, usv_pixel in zip(sv_img.flatten(), usv_img.flatten())
+        (a, b) for a, b in zip(imgA.flatten(), imgB.flatten())
     ])
 
-X_train = np.array([
-    combine(sv_img, usv_img)
-        for sv_img, usv_img in zip(sv_resized, usv_resized)
+def combineImageSet(setA, setB):
+    return np.array([
+        combineImage(imgA, imgB) for imgA, imgB in zip(setA, setB)
     ])
 
-print('X_train shape: (per-pixel 2-feature vector)')
-print(X_train.shape)
+def flattenImageSet(imgSet):
+    return np.array([
+        img.flatten() for img in imgSet
+    ])
+
+## Training
+X_train = combineImageSet(sv_resized, usv_resized)
+y_train = flattenImageSet(gt_resized)
+
+## Testing
+X_test = combineImageSet(sv_resized_test, usv_resized_test)
+y_test = flattenImageSet(gt_resized_test)
+
+print('X_train shape: (per-pixel 2-feature vector)', X_train.shape)
+print('y_train shape:', y_train.shape)
+print('X_test shape: (per-pixel 2-feature vector)', X_test.shape)
+print('y_test shape:', y_test.shape)
+
+#%% [markdown]
+# Train a classifier and predict.
 
 #%%
+from sklearn.linear_model import SGDClassifier
+sgd_clf = SGDClassifier(random_state=42, max_iter=1000, tol=1e-3)
+sgd_clf.fit(X_train, y_train)
+
+y_pred = sgd_clf.predict(X_test)
 print('End of program stub.')
