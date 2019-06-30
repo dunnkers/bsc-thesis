@@ -45,7 +45,7 @@ pyplot.subplot(2, 3, 1).set_title("Ground truth")
 imshow(gt[0])
 ax_hist = pyplot.subplot(2, 3, 4)
 ax_hist.hist(gt[0].ravel(), bins=256)
-print('Ground truth:\tshape {}\tmin,max({}, {})'.format(
+print('Ground truth:\tshape={}\tminmax=({}, {})'.format(
         gt[0].shape, gt[0].min(), gt[0].max()
     ))
 
@@ -53,7 +53,7 @@ pyplot.subplot(2, 3, 2).set_title("Supervised")
 imshow(sv[0])
 ax_hist = pyplot.subplot(2, 3, 5)
 ax_hist.hist(sv[0].ravel(), bins=256)
-print('Supervised:\tshape {}\tmin,max({}, {})'.format(
+print('Supervised:\tshape={}\tminmax=({}, {})'.format(
         sv[0].shape, sv[0].min(), sv[0].max()
     ))
 
@@ -61,7 +61,7 @@ pyplot.subplot(2, 3, 3).set_title("Unsupervised")
 imshow(usv[0])
 ax_hist = pyplot.subplot(2, 3, 6)
 ax_hist.hist(usv[0].ravel(), bins=256)
-print('Unsupervised:\tshape {}\tmin,max({}, {})'.format(
+print('Unsupervised:\tshape={}\tminmax=({}, {})'.format(
         usv[0].shape, usv[0].min(), usv[0].max()
     ))
 
@@ -157,24 +157,49 @@ print('Prepared training image data for index = 0:')
 
 pyplot.subplot(1, 3, 1).set_title("Ground truth")
 imshow(gt_prepared[0])
-print('Ground truth:\tshape {}\tmin,max({}, {})'.format(
+print('Ground truth:\tshape={}\tminmax=({}, {})'.format(
         gt_prepared[0].shape, gt_prepared[0].min(), gt_prepared[0].max()
     ))
 
 pyplot.subplot(1, 3, 2).set_title("Supervised")
 imshow(sv_prepared[0])
-print('Supervised:\tshape {}\tmin,max({}, {})'.format(
+print('Supervised:\tshape={}\tminmax=({}, {})'.format(
         sv_prepared[0].shape, sv_prepared[0].min(), sv_prepared[0].max()
     ))
 
 pyplot.subplot(1, 3, 3).set_title("Unsupervised")
 imshow(usv_prepared[0])
-print('Unsupervised:\tshape {}\tmin,max({}, {})'.format(
+print('Unsupervised:\tshape={}\tminmax=({}, {})'.format(
         usv_prepared[0].shape, usv_prepared[0].min(), usv_prepared[0].max()
     ))
 
 pyplot.show()
 
+#%% [markdown]
+# Analyze current performance of both approaches.
+
+#%%
+def accuracy(truth_vector, test_vector):
+    return np.sum(test_vector == truth_vector) / len(truth_vector) * 100
+
+def accuracySet(setA, setB):
+    return np.array([
+        accuracy(
+            imgA.flatten(), imgB.flatten()
+        ) for imgA, imgB in zip(setA, setB)
+    ])
+
+acc_sv = accuracySet(gt_prepared, sv_prepared)
+acc_usv = accuracySet(gt_prepared, usv_prepared)
+
+print('Supervised accuracy:')
+print('\tmean={0:.2f}%\tminmax=({1:.2f}, {2:.2f})\tvariance={3:.2f}'.format(
+    acc_sv.mean(), acc_sv.min(), acc_sv.max(), acc_sv.var()
+))
+print('Unsupervised accuracy:')
+print('\tmean={0:.2f}%\tminmax=({1:.2f}, {2:.2f})\tvariance={3:.2f}'.format(
+    acc_usv.mean(), acc_usv.min(), acc_usv.max(), acc_usv.var()
+))
 
 #%% [markdown]
 # Combine two approaches into a feature-vector.
