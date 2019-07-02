@@ -62,11 +62,11 @@ plotImgColumn("Unsupervised", usv[4], 3)
 pyplot.show()
 
 #%% [markdown]
-# Transform image data: convert to grayscale, resize, rescale.
+# Transform image data: convert to grayscale, resize, rescale, threshold.
+# See [https://en.wikipedia.org/wiki/Otsu%27s_method](https://en.wikipedia.org/wiki/Otsu%27s_method).
 
 #%%
 import numpy as np
-from sklearn.preprocessing import LabelBinarizer
 from sklearn.base import BaseEstimator, TransformerMixin
 
 from skimage.color import rgb2gray
@@ -114,11 +114,35 @@ class RGB2GrayTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X, y = None):
         return [rgb2gray(img) for img in X]
 
+class FlattenTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y = None):
+        return self
+    
+    def transform(self, X, y = None):
+        return np.array([img.flatten() for img in X])
+
+class CombineTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y = None):
+        return self
+    
+    def transform(self, X, y = None):
+        setA, setB = X
+        return np.array([
+            np.logical_and(imgA, imgB) for imgA, imgB in zip(setA, setB)
+        ])
+
+grayify = RGB2GrayTransformer()
 resizer = ResizeTransform()
 stretcher = StretchTransform()
-grayify = RGB2GrayTransformer()
-binarizer = LabelBinarizer()
 thresholder = ThresholdingTransform()
+flattener = FlattenTransformer()
+combiner = CombineTransformer()
 
 ## Training
 # Transform Ground Truth
@@ -132,6 +156,13 @@ sv_prepared = thresholder.fit_transform(sv_resized)
 usv_resized = resizer.fit_transform(usv)
 usv_stretched = stretcher.fit_transform(usv_resized)
 usv_prepared = thresholder.fit_transform(usv_stretched)
+## Convert to feature vectors (flatten)
+y_train = flattener.fit_transform(gt_prepared)
+print('y_train:\t{}'.format(y_train.shape))
+to_combine = (sv_prepared, usv_prepared)
+X_train_combined = combiner.fit_transform(to_combine)
+X_train = flattener.fit_transform(X_train_combined)
+print('X_train:\t{}'.format(X_train.shape))
 
 ## Testing
 # Transform Ground Truth
@@ -153,10 +184,16 @@ plotImgColumn("Supervised", sv_prepared[0], 2, hist=False)
 plotImgColumn("Unsupervised", usv_prepared[0], 3, hist=False)
 pyplot.show()
 
+plotImgColumn("Combined", X_train_combined[0], 1, hist=False)
+pyplot.show()
+
 print('Prepared image data for training sample at index = 4:')
 plotImgColumn("Ground truth", gt_prepared[4], 1, hist=False)
 plotImgColumn("Supervised", sv_prepared[4], 2, hist=False)
 plotImgColumn("Unsupervised", usv_prepared[4], 3, hist=False)
+pyplot.show()
+
+plotImgColumn("Combined", X_train_combined[4], 1, hist=False)
 pyplot.show()
 
 #%% [markdown]
@@ -191,10 +228,15 @@ print('\tmean={0:.2f}%\tminmax=({1:.2f}, {2:.2f})\tvariance={3:.2f}'.format(
 #%%
 # @FIXME should probably be a sklearn transformation of sorts.
 # -> sklearn.preprocessing.PolynomialFeatures perhaps
-""" Combine 2D image pixel values, by addition. Return flat (feature) array. """
+def combinePixel(pixelA, pixelB):
+    a = int(pixelA == 'true')
+    b = int(pixelB == 'true')
+    return a + b
+
+""" Combine 2 approaches. Return flat (feature) array. """
 def combineImage(imgA, imgB):
     return np.array([
-        a + b for a, b in zip(imgA.flatten(), imgB.flatten())
+        combinePixel(a, b) for a, b in zip(imgA.flatten(), imgB.flatten())
     ])
 
 def combineImageSet(setA, setB):
@@ -208,17 +250,17 @@ def flattenImageSet(imgSet):
     ])
 
 ## Training
-X_train = combineImageSet(sv_resized, usv_prepared)
-y_train = flattenImageSet(gt_resized)
+X_train = combineImageSet(sv_prepared, usv_prepared)
+y_train = flattenImageSet(gt_prepared)
 
 ## Testing
-X_test = combineImageSet(sv_resized_test, usv_resized_test)
-y_test = flattenImageSet(gt_resized_test)
+# X_test = combineImageSet(sv_resized_test, usv_resized_test)
+# y_test = flattenImageSet(gt_resized_test)
 
 print('X_train shape: (per-pixel 2-feature vector)', X_train.shape)
 print('y_train shape:', y_train.shape)
-print('X_test shape: (per-pixel 2-feature vector)', X_test.shape)
-print('y_test shape:', y_test.shape)
+# print('X_test shape: (per-pixel 2-feature vector)', X_test.shape)
+# print('y_test shape:', y_test.shape)
 
 #%% [markdown]
 # Train a classifier and predict.
