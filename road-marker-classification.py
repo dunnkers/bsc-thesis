@@ -84,7 +84,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from skimage.color import rgb2gray
 from skimage.transform import resize
 from skimage.exposure import rescale_intensity
-from skimage.filters import threshold_triangle
+from skimage.filters import threshold_yen
 
 class ResizeTransform(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -114,7 +114,7 @@ class ThresholdingTransform(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        return np.array([img > threshold_triangle(img) for img in X])
+        return np.array([img > threshold_yen(img) for img in X])
 
 class RGB2GrayTransformer(BaseEstimator, TransformerMixin):
     def __init__(self):
