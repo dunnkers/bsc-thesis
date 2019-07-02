@@ -55,10 +55,22 @@ plotImgColumn("Supervised", sv[0], 2)
 plotImgColumn("Unsupervised", usv[0], 3)
 pyplot.show()
 
+print('Raw image data for training sample at index = 3:')
+plotImgColumn("Ground truth", gt[3], 1)
+plotImgColumn("Supervised", sv[3], 2)
+plotImgColumn("Unsupervised", usv[3], 3)
+pyplot.show()
+
 print('Raw image data for training sample at index = 4:')
 plotImgColumn("Ground truth", gt[4], 1)
 plotImgColumn("Supervised", sv[4], 2)
 plotImgColumn("Unsupervised", usv[4], 3)
+pyplot.show()
+
+print('Raw image data for training sample at index = 8:')
+plotImgColumn("Ground truth", gt[8], 1)
+plotImgColumn("Supervised", sv[8], 2)
+plotImgColumn("Unsupervised", usv[8], 3)
 pyplot.show()
 
 #%% [markdown]
@@ -72,7 +84,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from skimage.color import rgb2gray
 from skimage.transform import resize
 from skimage.exposure import rescale_intensity
-from skimage.filters import threshold_otsu
+from skimage.filters import threshold_triangle
 
 class ResizeTransform(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -102,7 +114,7 @@ class ThresholdingTransform(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        return np.array([img > threshold_otsu(img) for img in X])
+        return np.array([img > threshold_triangle(img) for img in X])
 
 class RGB2GrayTransformer(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -173,27 +185,32 @@ sv_resized_test = resizer.transform(sv_test)
 # Transform unsupervised
 usv_resized_test = resizer.transform(usv_test)
 
-#%% [markdown]
-# Inspect new, resized and rescaled image data. Data is now in range
-# of 0 to 1.
-
-#%%
 print('Prepared image data for training sample at index = 0:')
-plotImgColumn("Ground truth", gt_prepared[0], 1, hist=False)
-plotImgColumn("Supervised", sv_prepared[0], 2, hist=False)
-plotImgColumn("Unsupervised", usv_prepared[0], 3, hist=False)
+plotImgColumn("Ground truth", gt_prepared[0], 1, hist=False, cols=4)
+plotImgColumn("Supervised", sv_prepared[0], 2, hist=False, cols=4)
+plotImgColumn("Unsupervised", usv_prepared[0], 3, hist=False, cols=4)
+plotImgColumn("Combined", X_train_combined[0], 4, hist=False, cols=4)
 pyplot.show()
 
-plotImgColumn("Combined", X_train_combined[0], 1, hist=False)
+print('Prepared image data for training sample at index = 3:')
+plotImgColumn("Ground truth", gt_prepared[3], 1, hist=False, cols=4)
+plotImgColumn("Supervised", sv_prepared[3], 2, hist=False, cols=4)
+plotImgColumn("Unsupervised", usv_prepared[3], 3, hist=False, cols=4)
+plotImgColumn("Combined", X_train_combined[3], 4, hist=False, cols=4)
 pyplot.show()
 
 print('Prepared image data for training sample at index = 4:')
-plotImgColumn("Ground truth", gt_prepared[4], 1, hist=False)
-plotImgColumn("Supervised", sv_prepared[4], 2, hist=False)
-plotImgColumn("Unsupervised", usv_prepared[4], 3, hist=False)
+plotImgColumn("Ground truth", gt_prepared[4], 1, hist=False, cols=4)
+plotImgColumn("Supervised", sv_prepared[4], 2, hist=False, cols=4)
+plotImgColumn("Unsupervised", usv_prepared[4], 3, hist=False, cols=4)
+plotImgColumn("Combined", X_train_combined[4], 4, hist=False, cols=4)
 pyplot.show()
 
-plotImgColumn("Combined", X_train_combined[4], 1, hist=False)
+print('Prepared image data for training sample at index = 8:')
+plotImgColumn("Ground truth", gt_prepared[8], 1, hist=False, cols=4)
+plotImgColumn("Supervised", sv_prepared[8], 2, hist=False, cols=4)
+plotImgColumn("Unsupervised", usv_prepared[8], 3, hist=False, cols=4)
+plotImgColumn("Combined", X_train_combined[8], 4, hist=False, cols=4)
 pyplot.show()
 
 #%% [markdown]
@@ -209,6 +226,7 @@ def accuracySet(setA, setB):
             imgA.flatten(), imgB.flatten()
         ) for imgA, imgB in zip(setA, setB)
     ])
+# use this: from sklearn.metrics import accuracy_score
 
 acc_sv = accuracySet(gt_prepared, sv_prepared)
 acc_usv = accuracySet(gt_prepared, usv_prepared)
@@ -226,21 +244,21 @@ print('\tmean={0:.2f}%\tminmax=({1:.2f}, {2:.2f})\tvariance={3:.2f}'.format(
 # Train a classifier and predict.
 
 #%%
-from sklearn.linear_model import SGDClassifier
+# from sklearn.linear_model import SGDClassifier
 
 # sgd_clf = SGDClassifier(random_state=42, max_iter=1000, tol=1e-3)
 # sgd_clf.fit(X_train, y_train)
 # y_pred = sgd_clf.predict(X_test)
 
-from sklearn.linear_model import SGDRegressor
-from sklearn.multioutput import MultiOutputClassifier
-from sklearn.svm import SVC
+# from sklearn.linear_model import SGDRegressor
+# from sklearn.multioutput import MultiOutputClassifier
+# from sklearn.svm import SVC
 
-clf = SVC(gamma='auto')
-sgd_regr = SGDRegressor()
-multout_clf = MultiOutputClassifier(sgd_regr)
-multout_clf.fit(X_train, y_train)
-# y_pred = multout_clf.predict(X_test)
-# y_pred
+# clf = SVC(gamma='auto')
+# sgd_regr = SGDRegressor()
+# multout_clf = MultiOutputClassifier(sgd_regr)
+# multout_clf.fit(X_train, y_train)
+# # y_pred = multout_clf.predict(X_test)
+# # y_pred
 
-print('End of program stub.')
+# print('End of program stub.')
