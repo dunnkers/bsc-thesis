@@ -223,46 +223,6 @@ print('\tmean={0:.2f}%\tminmax=({1:.2f}, {2:.2f})\tvariance={3:.2f}'.format(
 ))
 
 #%% [markdown]
-# Combine two approaches into a feature-vector.
-
-#%%
-# @FIXME should probably be a sklearn transformation of sorts.
-# -> sklearn.preprocessing.PolynomialFeatures perhaps
-def combinePixel(pixelA, pixelB):
-    a = int(pixelA == 'true')
-    b = int(pixelB == 'true')
-    return a + b
-
-""" Combine 2 approaches. Return flat (feature) array. """
-def combineImage(imgA, imgB):
-    return np.array([
-        combinePixel(a, b) for a, b in zip(imgA.flatten(), imgB.flatten())
-    ])
-
-def combineImageSet(setA, setB):
-    return np.array([
-        combineImage(imgA, imgB) for imgA, imgB in zip(setA, setB)
-    ])
-
-def flattenImageSet(imgSet):
-    return np.array([
-        img.flatten() for img in imgSet
-    ])
-
-## Training
-X_train = combineImageSet(sv_prepared, usv_prepared)
-y_train = flattenImageSet(gt_prepared)
-
-## Testing
-# X_test = combineImageSet(sv_resized_test, usv_resized_test)
-# y_test = flattenImageSet(gt_resized_test)
-
-print('X_train shape: (per-pixel 2-feature vector)', X_train.shape)
-print('y_train shape:', y_train.shape)
-# print('X_test shape: (per-pixel 2-feature vector)', X_test.shape)
-# print('y_test shape:', y_test.shape)
-
-#%% [markdown]
 # Train a classifier and predict.
 
 #%%
@@ -280,7 +240,7 @@ clf = SVC(gamma='auto')
 sgd_regr = SGDRegressor()
 multout_clf = MultiOutputClassifier(sgd_regr)
 multout_clf.fit(X_train, y_train)
-y_pred = multout_clf.predict(X_test)
-y_pred
+# y_pred = multout_clf.predict(X_test)
+# y_pred
 
 print('End of program stub.')
