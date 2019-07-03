@@ -18,27 +18,29 @@ SAMPLES_AMOUNT = 1000
 
 ## Training
 # Ground truth
-gt = imread_collection('./data/groundtruth/image?.png', False)
+gt = imread_collection('./data/groundtruth/image??.png', False)
 # Supervised
-sv = imread_collection('./data/supervised/image?.png', False)
+sv = imread_collection('./data/supervised/image??.png', False)
 # Unsupervised
-usv = imread_collection('./data/unsupervised/output/output_image?.png', False)
+usv = imread_collection('./data/unsupervised/output/output_image??.png', False)
 
 print('gt size: {}, sv size: {}, usv size: {}'.format(
         gt.data.size, sv.data.size, usv.data.size
     ))
+assert(gt.data.size == sv.data.size == usv.data.size)
 
 ## Testing
 # Ground truth
-gt_test = imread_collection('./data/groundtruth/image10.png', False)
+gt_test = imread_collection('./data/groundtruth/image100.png', False)
 # Supervised
-sv_test = imread_collection('./data/supervised/image10.png', False)
+sv_test = imread_collection('./data/supervised/image100.png', False)
 # Unsupervised
-usv_test = imread_collection('./data/unsupervised/output/output_image10.png', False)
+usv_test = imread_collection('./data/unsupervised/output/output_image100.png', False)
 
 print('gt_test size: {}, sv_test size: {}, usv_test size: {}'.format(
         gt_test.data.size, sv_test.data.size, usv_test.data.size
     ))
+assert(gt_test.data.size == sv_test.data.size == usv_test.data.size)
 
 #%% [markdown]
 # Plot an image of each data type.
@@ -199,86 +201,80 @@ class SelectTransformer(BaseEstimator, TransformerMixin):
 grayify = RGB2GrayTransformer()
 resizer = ResizeTransform()
 rescaler = RescalerTranform()
-thresholder = ThresholdingTransform()
+thresholder = ThresholdingTransform() # use Binarize or sim; perf
 vectorize = ToVectorTransformer()
 zipper = ZipperTransformer()
 flatten = FlattenTransformer()
-sampler = SamplerTransformer(sample_size=1000) # 1000 samples per image.
+sampler = SamplerTransformer(sample_size=SAMPLES_AMOUNT)
 selector = SelectTransformer()
 
-## Training
-# Transform Ground Truth images
+##### Training
+### Transform Ground Truth images
 gt_grayed = grayify.fit_transform(gt)
 gt_resized = resizer.fit_transform(gt_grayed)
 gt_rescaled = rescaler.fit_transform(gt_resized)
 gt_prepared = thresholder.fit_transform(gt_rescaled)
-## Sample
+# Sample
 gt_flat_img = flatten.fit_transform(gt_prepared)
 sample_idxs = sampler.fit_transform(gt_flat_img)
 
-# Transform SV and USV images
+### Transform SV and USV images
 sv_resized = resizer.fit_transform(sv)
 sv_rescaled = rescaler.fit_transform(sv_resized)
 usv_resized = resizer.fit_transform(usv)
 usv_rescaled = rescaler.fit_transform(usv_resized)
-## Sample
+# Sample
 sv_flat_img = flatten.fit_transform(sv_rescaled)
 usv_flat_img = flatten.fit_transform(usv_rescaled)
 
-# Select indices per-image
+### Select indices per-image
 gt_selected = selector.fit_transform((gt_flat_img, sample_idxs))
 sv_selected = selector.fit_transform((sv_flat_img, sample_idxs))
 usv_selected = selector.fit_transform((usv_flat_img, sample_idxs))
-## Feature vectors
-y_train_all = vectorize.fit_transform(gt_selected)
+
+### Feature vectors
 X_train_all = zipper.fit_transform((sv_selected, usv_selected))
+y_train_all = vectorize.fit_transform(gt_selected)
+
+##### Testing
+### Transform Ground Truth images
+gt_test_grayed = grayify.fit_transform(gt_test)
+gt_test_resized = resizer.fit_transform(gt_test_grayed)
+gt_test_rescaled = rescaler.fit_transform(gt_test_resized)
+gt_test_prepared = thresholder.fit_transform(gt_test_rescaled)
+
+### Transform SV and USV images
+sv_test_resized = resizer.fit_transform(sv_test)
+sv_test_rescaled = rescaler.fit_transform(sv_test_resized)
+usv_test_resized = resizer.fit_transform(usv_test)
+usv_test_rescaled = rescaler.fit_transform(usv_test_resized)
+
+### Feature vectors
+X_test_all = zipper.fit_transform((sv_test_rescaled, usv_test_rescaled))
+y_test_all = vectorize.fit_transform(gt_test_prepared)
 
 # SAMPLING
 # @FIXME split first, then transform. DONT fit on test data.
 
-# def stratified_split(y, train_ratio):
-
-#     def split_class(y, label, train_ratio):
-#         indices = np.flatnonzero(y == label)
-#         n_train = int(indices.size*train_ratio)
-#         train_index = indices[:n_train]
-#         test_index = indices[n_train:]
-#         return (train_index, test_index)
-
-#     idx = [split_class(y, label, train_ratio) for label in np.unique(y)]
-#     train_index = np.concatenate([train for train, _ in idx])
-#     test_index = np.concatenate([test for _, test in idx])
-#     return train_index, test_index
-
+# sss = StratifiedShuffleSplit(train_size=10000, n_splits=1, 
+#                              test_size=1000, random_state=0)  
 # X = X_train_all
 # y = y_train_all
-# prepared_shape = np.array(SIZE_NORMAL_SHAPE) * RESCALE_FACTOR
-# prepared_length = np.prod(prepared_shape)
-# train_samples = 10000
-# test_samples = 1000
-# train_ratio = float(train_samples)/(train_samples + test_samples)
-# train_index, test_index = stratified_split(y, train_ratio)
-# y_train = y[train_index]
-# y_test = y[test_index]
+# for train_index, test_index in sss.split(X, y):
+#     X_train, X_test = X[train_index], X[test_index]
+#     y_train, y_test = y[train_index], y[test_index]
 
-sss = StratifiedShuffleSplit(train_size=10000, n_splits=1, 
-                             test_size=1000, random_state=0)  
-X = X_train_all
-y = y_train_all
-for train_index, test_index in sss.split(X, y):
-    X_train, X_test = X[train_index], X[test_index]
-    y_train, y_test = y[train_index], y[test_index]
+X_train = X_train_all
+y_train = y_train_all
+X_test = X_test_all
+y_test = y_test_all
 
-from scipy import stats
-print(stats.itemfreq(y_train))
-print(stats.itemfreq(y_test))
-print('end')
+print('X_train:\t{}\tsize {}'.format(X_train.shape, X_train.size))
+print('y_train:\t{}\tsize {}'.format(y_train.shape, y_train.size))
+print('X_test:\t\t{}\tsize {}'.format(X_test.shape, X_test.size))
+print('y_test:\t\t{}\tsize {}'.format(y_test.shape, y_test.size))
 
 # Picking random samples
-
-# indices = sample_without_replacement(prepared_length, SAMPLES_AMOUNT)
-# samples = np.take(X_train_all, indices, axis=0)
-# print(samples.shape)
 
 #%% [markdown]
 # Train a classifier and predict.
@@ -294,4 +290,18 @@ predictions = svm.predict(X_test)
 # # accuracy score
 acc_score = accuracy_score(y_test, predictions)
 print(acc_score)
-acc_score
+
+def reconstructImages(predictions):
+    original_shape = (
+            np.array(SIZE_NORMAL_SHAPE) * RESCALE_FACTOR
+        ).astype('int')
+    vectors = np.split(predictions, gt_test.data.size)
+    images = [np.reshape(vector, original_shape) for vector in vectors]
+    return images
+
+reconstructed_images = reconstructImages(predictions)
+plotImgColumn("Ground truth", gt_test[0], 1, hist=False, cols=4)
+plotImgColumn("Supervised", sv_test[0], 2, hist=False, cols=4)
+plotImgColumn("Unsupervised", usv_test[0], 3, hist=False, cols=4)
+plotImgColumn("Prediction", reconstructed_images[0], 4, hist=False, cols=4)
+pyplot.show()
