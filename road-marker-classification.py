@@ -18,11 +18,11 @@ SAMPLES_AMOUNT = 1000
 
 ## Training
 # Ground truth
-gt = imread_collection('./data/groundtruth/image??.png', False)
+gt = imread_collection('./data/groundtruth/image1??.png', False)
 # Supervised
-sv = imread_collection('./data/supervised/image??.png', False)
+sv = imread_collection('./data/supervised/image1??.png', False)
 # Unsupervised
-usv = imread_collection('./data/unsupervised/output/output_image??.png', False)
+usv = imread_collection('./data/unsupervised/output/output_image1??.png', False)
 
 print('gt size: {}, sv size: {}, usv size: {}'.format(
         gt.data.size, sv.data.size, usv.data.size
@@ -31,11 +31,11 @@ assert(gt.data.size == sv.data.size == usv.data.size)
 
 ## Testing
 # Ground truth
-gt_test = imread_collection('./data/groundtruth/image100.png', False)
+gt_test = imread_collection('./data/groundtruth/image?.png', False)
 # Supervised
-sv_test = imread_collection('./data/supervised/image100.png', False)
+sv_test = imread_collection('./data/supervised/image?.png', False)
 # Unsupervised
-usv_test = imread_collection('./data/unsupervised/output/output_image100.png', False)
+usv_test = imread_collection('./data/unsupervised/output/output_image?.png', False)
 
 print('gt_test size: {}, sv_test size: {}, usv_test size: {}'.format(
         gt_test.data.size, sv_test.data.size, usv_test.data.size
@@ -59,11 +59,11 @@ def plotImgColumn(title, img, idx, cols=3, hist=True):
         ax_hist = pyplot.subplot(rows, cols, cols + idx, label=title)
         ax_hist.hist(img.ravel(), bins=128)
 
-print('Raw image data for training sample at index = 0:')
-plotImgColumn("Ground truth", gt[0], 1)
-plotImgColumn("Supervised", sv[0], 2)
-plotImgColumn("Unsupervised", usv[0], 3)
-pyplot.show()
+# print('Raw image data for training sample at index = 0:')
+# plotImgColumn("Ground truth", gt[0], 1)
+# plotImgColumn("Supervised", sv[0], 2)
+# plotImgColumn("Unsupervised", usv[0], 3)
+# pyplot.show()
 
 #%% [markdown]
 # Transform image data: convert to grayscale, resize, rescale, threshold.
@@ -285,23 +285,42 @@ from sklearn.metrics import accuracy_score
 # train support-vector-machine
 svm = SVC(gamma = 'auto')
 svm.fit(X_train, y_train)
+
+#%% [markdown]
+# Predict.
+
+#%% 
 predictions = svm.predict(X_test)
 
-# # accuracy score
+# accuracy score
 acc_score = accuracy_score(y_test, predictions)
 print(acc_score)
 
-def reconstructImages(predictions):
+#%%
+from os.path import splitext, basename
+
+def reconstructImages(vectors):
     original_shape = (
             np.array(SIZE_NORMAL_SHAPE) * RESCALE_FACTOR
         ).astype('int')
-    vectors = np.split(predictions, gt_test.data.size)
     images = [np.reshape(vector, original_shape) for vector in vectors]
     return images
 
-reconstructed_images = reconstructImages(predictions)
-plotImgColumn("Ground truth", gt_test[0], 1, hist=False, cols=4)
-plotImgColumn("Supervised", sv_test[0], 2, hist=False, cols=4)
-plotImgColumn("Unsupervised", usv_test[0], 3, hist=False, cols=4)
-plotImgColumn("Prediction", reconstructed_images[0], 4, hist=False, cols=4)
-pyplot.show()
+vectors = np.split(predictions, gt_test.data.size)
+truth_vals = np.split(y_test,   gt_test.data.size)
+reconstructed_images = reconstructImages(vectors)
+
+for idx, im in enumerate(reconstructed_images):
+    img_acc = accuracy_score(truth_vals[idx], vectors[idx])
+    plotImgColumn("Ground truth", gt_test[idx], 1, hist=False, cols=4)
+    plotImgColumn("Supervised", sv_test[idx], 2, hist=False, cols=4)
+    plotImgColumn("Unsupervised", usv_test[idx], 3, hist=False, cols=4)
+    plotImgColumn("Prediction", im, 4, hist=False, cols=4)
+    pyplot.text(-1000, 450, 'X_train={}, accuracy={:.4f}%'.format(
+        X_train.shape, img_acc*100
+    ))
+    file, ext = splitext(gt.files[idx])
+    pyplot.savefig('/home/s2995697/Downloads/{}_fused{}'.format(
+        basename(file), ext
+    ))
+    pyplot.show()
