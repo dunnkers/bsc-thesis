@@ -3,6 +3,10 @@
 # Fusing two road marker detection algorithms.
 
 #%%
+import sklearn
+print('sklearn: {}'.format(sklearn.__version__))
+
+#%%
 from skimage.io import imread_collection
 
 # @FIXME or dynamically compute? analyze average image size?
@@ -68,6 +72,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.random import sample_without_replacement
 from sklearn.model_selection import StratifiedShuffleSplit    
+from sklearn.utils import resample
 
 from skimage.color import rgb2gray
 from skimage.transform import resize, rescale
@@ -123,6 +128,16 @@ class ToVectorTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X, y = None):
         return X.flatten()
 
+class FlattenTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y = None):
+        return self
+    
+    def transform(self, X, y = None):
+        return [img.flatten() for img in X]
+
 class ZipperTransformer(BaseEstimator, TransformerMixin):
     def __init__(self):
         pass
@@ -134,12 +149,47 @@ class ZipperTransformer(BaseEstimator, TransformerMixin):
         a, b = X
         return np.array((a.flatten(), b.flatten())).T
 
+class SamplerTransformer(BaseEstimator, TransformerMixin):
+    """ Sample size set to the class minority by default.
+        Can specify custom sample size. """
+    def __init__(self, sample_size=None):
+        self.sample_size = sample_size
+
+    def fit(self, X, y = None):
+        return self
+    
+    def transform(self, X, y = None):
+        # Resamples classes to match the size of the smallest class,
+        # aka the minority.
+        def sample(vector):
+            classes, counts = np.unique(vector, return_counts=True)
+            minority = np.argmin(counts)
+
+            # resample with stratify is sklearn >= v0.21.2
+            # resampled = resample(vector, ...)
+            splitted = [
+                np.where(vector == classname)[0] for classname in classes
+            ]
+
+            sample_size = self.sample_size or counts[minority]
+
+            resampled = np.array([
+                resample(split, n_samples=sample_size, random_state=41)
+                    for split in splitted
+            ])
+
+            return resampled.flatten()
+
+        return np.array([sample(vector) for vector in X])
+
 grayify = RGB2GrayTransformer()
 resizer = ResizeTransform()
 rescaler = RescalerTranform()
 thresholder = ThresholdingTransform()
 vectorize = ToVectorTransformer()
 zipper = ZipperTransformer()
+flatten = FlattenTransformer()
+sampler = SamplerTransformer()
 
 ## Training
 # Transform Ground Truth images
@@ -147,14 +197,22 @@ gt_grayed = grayify.fit_transform(gt)
 gt_resized = resizer.fit_transform(gt_grayed)
 gt_rescaled = rescaler.fit_transform(gt_resized)
 gt_prepared = thresholder.fit_transform(gt_rescaled)
+## Sample
+gt_flat_img = flatten.fit_transform(gt_prepared)
+sample_idxs = sampler.fit_transform(gt_flat_img)
 ## Truth vector
 y_train_all = vectorize.fit_transform(gt_prepared)
-# Transform sv and usv into 1
+
 # Transform SV and USV images
 sv_resized = resizer.fit_transform(sv)
 sv_rescaled = rescaler.fit_transform(sv_resized)
 usv_resized = resizer.fit_transform(usv)
 usv_rescaled = rescaler.fit_transform(usv_resized)
+
+## Sample
+sv_flat_img = flatten.fit_transform(sv_rescaled)
+usv_flat_img = flatten.fit_transform(usv_rescaled)
+
 ## Feature vector
 X_train_all = zipper.fit_transform((sv_rescaled, usv_rescaled))
 
