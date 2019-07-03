@@ -182,6 +182,20 @@ class SamplerTransformer(BaseEstimator, TransformerMixin):
 
         return np.array([sample(vector) for vector in X])
 
+# Select certain indices in dataset
+class SelectTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y = None):
+        return self
+    
+    def transform(self, X, y = None):
+        data, indexes = X
+        return np.array([
+            vector[select] for vector, select in zip(data, indexes)
+            ])
+
 grayify = RGB2GrayTransformer()
 resizer = ResizeTransform()
 rescaler = RescalerTranform()
@@ -189,7 +203,8 @@ thresholder = ThresholdingTransform()
 vectorize = ToVectorTransformer()
 zipper = ZipperTransformer()
 flatten = FlattenTransformer()
-sampler = SamplerTransformer()
+sampler = SamplerTransformer(sample_size=1000) # 1000 samples per image.
+selector = SelectTransformer()
 
 ## Training
 # Transform Ground Truth images
@@ -200,21 +215,23 @@ gt_prepared = thresholder.fit_transform(gt_rescaled)
 ## Sample
 gt_flat_img = flatten.fit_transform(gt_prepared)
 sample_idxs = sampler.fit_transform(gt_flat_img)
-## Truth vector
-y_train_all = vectorize.fit_transform(gt_prepared)
 
 # Transform SV and USV images
 sv_resized = resizer.fit_transform(sv)
 sv_rescaled = rescaler.fit_transform(sv_resized)
 usv_resized = resizer.fit_transform(usv)
 usv_rescaled = rescaler.fit_transform(usv_resized)
-
 ## Sample
 sv_flat_img = flatten.fit_transform(sv_rescaled)
 usv_flat_img = flatten.fit_transform(usv_rescaled)
 
-## Feature vector
-X_train_all = zipper.fit_transform((sv_rescaled, usv_rescaled))
+# Select indices per-image
+gt_selected = selector.fit_transform((gt_flat_img, sample_idxs))
+sv_selected = selector.fit_transform((sv_flat_img, sample_idxs))
+usv_selected = selector.fit_transform((usv_flat_img, sample_idxs))
+## Feature vectors
+y_train_all = vectorize.fit_transform(gt_selected)
+X_train_all = zipper.fit_transform((sv_selected, usv_selected))
 
 # SAMPLING
 # @FIXME split first, then transform. DONT fit on test data.
