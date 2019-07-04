@@ -15,6 +15,7 @@ RESCALE_FACTOR = 1.0 / 7.0
 # 1.0 / 4.0 = (350,175) => 61250 elements
 # 1.0 / 7.0 = (200,100) => 20000 elements
 SAMPLES_AMOUNT = 100
+OUTPUT_FOLDER_PATH = './output'
 
 print('Resized shape: {}'.format(SIZE_NORMAL_SHAPE))
 print('Rescale factor: {:.2f}'.format(RESCALE_FACTOR))
@@ -290,7 +291,8 @@ acc_score = accuracy_score(y_test, predictions)
 print(acc_score)
 
 #%%
-from os.path import splitext, basename
+from os.path import splitext, basename, exists
+from os import makedirs
 
 def reconstructImages(vectors):
     original_shape = (
@@ -302,6 +304,9 @@ def reconstructImages(vectors):
 vectors = np.split(predictions, gt_test.data.size)
 truth_vals = np.split(y_test,   gt_test.data.size)
 reconstructed_images = reconstructImages(vectors)
+
+if not exists(OUTPUT_FOLDER_PATH):
+    makedirs(OUTPUT_FOLDER_PATH)
 
 for idx, im in enumerate(reconstructed_images):
     img_acc = accuracy_score(truth_vals[idx], vectors[idx])
@@ -316,7 +321,7 @@ for idx, im in enumerate(reconstructed_images):
         X_train.shape, img_acc*100
     ))
     file, ext = splitext(gt.files[idx])
-    pyplot.savefig('/home/s2995697/Downloads/{}_fused{}'.format(
-        basename(file), ext
+    pyplot.savefig('{}/{}_fused{}'.format(
+        OUTPUT_FOLDER_PATH, basename(file), ext
     ))
     pyplot.show()
