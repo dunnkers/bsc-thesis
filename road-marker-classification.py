@@ -11,18 +11,22 @@ from skimage.io import imread_collection
 
 # @FIXME or dynamically compute? analyze average image size?
 SIZE_NORMAL_SHAPE = (1400, 700)
-RESCALE_FACTOR = 1.0 / 4.0
-SAMPLES_AMOUNT = 1000
-# TRAIN_SAMPLES = 7
-# TEST_SAMPLES = 2
+RESCALE_FACTOR = 1.0 / 7.0
+# 1.0 / 4.0 = (350,175) => 61250 elements
+# 1.0 / 7.0 = (200,100) => 20000 elements
+SAMPLES_AMOUNT = 100
+
+print('Resized shape: {}'.format(SIZE_NORMAL_SHAPE))
+print('Rescale factor: {:.2f}'.format(RESCALE_FACTOR))
+print('Sample amount: {:.2f}'.format(SAMPLES_AMOUNT))
 
 ## Training
 # Ground truth
-gt = imread_collection('./data/groundtruth/image1??.png', False)
+gt = imread_collection('./data/groundtruth/image1?.png', False)
 # Supervised
-sv = imread_collection('./data/supervised/image1??.png', False)
+sv = imread_collection('./data/supervised/image1?.png', False)
 # Unsupervised
-usv = imread_collection('./data/unsupervised/output/output_image1??.png', False)
+usv = imread_collection('./data/unsupervised/output/output_image1?.png', False)
 
 print('gt size: {}, sv size: {}, usv size: {}'.format(
         gt.data.size, sv.data.size, usv.data.size
@@ -50,8 +54,8 @@ from matplotlib import pyplot
 from skimage.io import imshow
 
 def plotImgColumn(title, img, idx, cols=3, hist=True):
-    print('{}:\tshape={}\tminmax=({}, {})'.format(
-            title, img.shape, img.min(), img.max()))
+    # print('{}:\tshape={}\tminmax=({}, {})'.format(
+    #         title, img.shape, img.min(), img.max()))
     rows = 2 if hist else 1
     pyplot.subplot(rows, cols, idx).set_title(title)
     imshow(img)
@@ -238,31 +242,20 @@ y_train_all = vectorize.fit_transform(gt_selected)
 
 ##### Testing
 ### Transform Ground Truth images
-gt_test_grayed = grayify.fit_transform(gt_test)
-gt_test_resized = resizer.fit_transform(gt_test_grayed)
-gt_test_rescaled = rescaler.fit_transform(gt_test_resized)
-gt_test_prepared = thresholder.fit_transform(gt_test_rescaled)
+gt_test_grayed = grayify.transform(gt_test)
+gt_test_resized = resizer.transform(gt_test_grayed)
+gt_test_rescaled = rescaler.transform(gt_test_resized)
+gt_test_prepared = thresholder.transform(gt_test_rescaled)
 
 ### Transform SV and USV images
-sv_test_resized = resizer.fit_transform(sv_test)
-sv_test_rescaled = rescaler.fit_transform(sv_test_resized)
-usv_test_resized = resizer.fit_transform(usv_test)
-usv_test_rescaled = rescaler.fit_transform(usv_test_resized)
+sv_test_resized = resizer.transform(sv_test)
+sv_test_rescaled = rescaler.transform(sv_test_resized)
+usv_test_resized = resizer.transform(usv_test)
+usv_test_rescaled = rescaler.transform(usv_test_resized)
 
 ### Feature vectors
-X_test_all = zipper.fit_transform((sv_test_rescaled, usv_test_rescaled))
-y_test_all = vectorize.fit_transform(gt_test_prepared)
-
-# SAMPLING
-# @FIXME split first, then transform. DONT fit on test data.
-
-# sss = StratifiedShuffleSplit(train_size=10000, n_splits=1, 
-#                              test_size=1000, random_state=0)  
-# X = X_train_all
-# y = y_train_all
-# for train_index, test_index in sss.split(X, y):
-#     X_train, X_test = X[train_index], X[test_index]
-#     y_train, y_test = y[train_index], y[test_index]
+X_test_all = zipper.transform((sv_test_rescaled, usv_test_rescaled))
+y_test_all = vectorize.transform(gt_test_prepared)
 
 X_train = X_train_all
 y_train = y_train_all
@@ -316,7 +309,10 @@ for idx, im in enumerate(reconstructed_images):
     plotImgColumn("Supervised", sv_test[idx], 2, hist=False, cols=4)
     plotImgColumn("Unsupervised", usv_test[idx], 3, hist=False, cols=4)
     plotImgColumn("Prediction", im, 4, hist=False, cols=4)
-    pyplot.text(-1000, 450, 'X_train={}, accuracy={:.4f}%'.format(
+
+    # scale_factor=1.0/4.0; (-1000, 450)
+    # scale_factor=1.0/7.0; (-500, 250)
+    pyplot.text(-500, 250, 'X_train={}, accuracy={:.4f}%'.format(
         X_train.shape, img_acc*100
     ))
     file, ext = splitext(gt.files[idx])
