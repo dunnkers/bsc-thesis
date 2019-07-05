@@ -25,23 +25,16 @@ SAMPLES_AMOUNT = 100
 OUTPUT_FOLDER_PATH = './output'
 OUTPUT_LOGFILE_PATH = './output.txt'
 
-# works but logs to output twice.
-# logger = logging.getLogger()
-# fhandler = logging.FileHandler(filename=OUTPUT_LOGFILE_PATH, mode='a')
-# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# fhandler.setFormatter(formatter)
-# logger.addHandler(fhandler)
-# logger.setLevel(logging.DEBUG)
-# logging.debug("test")
-
-from importlib import reload  # Not needed in Python 2
+# https://stackoverflow.com/a/21475297
+from importlib import reload
 reload(logging)
-logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.DEBUG, datefmt='%I:%M:%S')
-
-
-# Now, we can log to both ti file and console
-logging.info('Jackdaws love my big sphinx of quartz.')
-logging.info('Hello world')
+logFormat = '%(asctime)s %(levelname)s:\t%(message)s'
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger()
+fhandler = logging.FileHandler(filename=OUTPUT_LOGFILE_PATH, mode='a')
+formatter = logging.Formatter(logFormat)
+fhandler.setFormatter(formatter)
+logger.addHandler(fhandler)
 
 print('Resized shape: {}'.format(SIZE_NORMAL_SHAPE))
 print('Rescale factor: {:.2f}'.format(RESCALE_FACTOR))
