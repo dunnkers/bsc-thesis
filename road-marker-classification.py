@@ -4,22 +4,54 @@
 
 #%%
 import sklearn
+import datetime
+import time
+
 print('sklearn: {}'.format(sklearn.__version__))
+print('starttime =', datetime.datetime.now())
+
+#%% [markdown]
+# Config.
 
 #%%
-from skimage.io import imread_collection
+import sys
+import logging
 
-# @FIXME or dynamically compute? analyze average image size?
 SIZE_NORMAL_SHAPE = (1400, 700)
 RESCALE_FACTOR = 1.0 / 7.0
-# 1.0 / 4.0 = (350,175) => 61250 elements
-# 1.0 / 7.0 = (200,100) => 20000 elements
+    # 1.0 / 4.0 = (350,175) => 61250 elements
+    # 1.0 / 7.0 = (200,100) => 20000 elements
 SAMPLES_AMOUNT = 100
 OUTPUT_FOLDER_PATH = './output'
+OUTPUT_LOGFILE_PATH = './output.txt'
+
+# works but logs to output twice.
+# logger = logging.getLogger()
+# fhandler = logging.FileHandler(filename=OUTPUT_LOGFILE_PATH, mode='a')
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# fhandler.setFormatter(formatter)
+# logger.addHandler(fhandler)
+# logger.setLevel(logging.DEBUG)
+# logging.debug("test")
+
+from importlib import reload  # Not needed in Python 2
+reload(logging)
+logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.DEBUG, datefmt='%I:%M:%S')
+
+
+# Now, we can log to both ti file and console
+logging.info('Jackdaws love my big sphinx of quartz.')
+logging.info('Hello world')
 
 print('Resized shape: {}'.format(SIZE_NORMAL_SHAPE))
 print('Rescale factor: {:.2f}'.format(RESCALE_FACTOR))
 print('Sample amount: {:.2f}'.format(SAMPLES_AMOUNT))
+
+#%%
+from skimage.io import imread_collection
+
+start = time.time()
+print('Image loading')
 
 ## Training
 # Ground truth
@@ -29,10 +61,10 @@ sv = imread_collection('./data/supervised/image1?.png', False)
 # Unsupervised
 usv = imread_collection('./data/unsupervised/output/output_image1?.png', False)
 
-print('gt size: {}, sv size: {}, usv size: {}'.format(
-        gt.data.size, sv.data.size, usv.data.size
+print('gt:\t\t{}\tsv: {}\tusv: {}'.format(
+        gt.data.shape, sv.data.shape, usv.data.shape
     ))
-assert(gt.data.size == sv.data.size == usv.data.size)
+assert(gt.data.shape == sv.data.shape == usv.data.shape)
 
 ## Testing
 # Ground truth
@@ -42,10 +74,13 @@ sv_test = imread_collection('./data/supervised/image?.png', False)
 # Unsupervised
 usv_test = imread_collection('./data/unsupervised/output/output_image?.png', False)
 
-print('gt_test size: {}, sv_test size: {}, usv_test size: {}'.format(
-        gt_test.data.size, sv_test.data.size, usv_test.data.size
+print('gt_test:\t{}\tsv_test: {}\tusv_test: {}'.format(
+        gt_test.data.shape, sv_test.data.shape, usv_test.data.shape
     ))
-assert(gt_test.data.size == sv_test.data.size == usv_test.data.size)
+assert(gt_test.data.shape == sv_test.data.shape == usv_test.data.shape)
+
+end = time.time()
+print('reading images took {:.4f} sec'.format(end - start))
 
 #%% [markdown]
 # Plot an image of each data type.
@@ -60,7 +95,7 @@ def plotImgColumn(title, img, idx, cols=3, hist=True):
     rows = 2 if hist else 1
     pyplot.subplot(rows, cols, idx).set_title(title)
     imshow(img)
-    if hist:    
+    if hist:
         ax_hist = pyplot.subplot(rows, cols, cols + idx, label=title)
         ax_hist.hist(img.ravel(), bins=128)
 
@@ -84,6 +119,9 @@ from sklearn.utils import resample
 from skimage.color import rgb2gray
 from skimage.transform import resize, rescale
 from skimage.filters import threshold_yen
+
+start = time.time()
+print('Transformations')
 
 class ResizeTransform(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -268,7 +306,8 @@ print('y_train:\t{}\tsize {}'.format(y_train.shape, y_train.size))
 print('X_test:\t\t{}\tsize {}'.format(X_test.shape, X_test.size))
 print('y_test:\t\t{}\tsize {}'.format(y_test.shape, y_test.size))
 
-# Picking random samples
+end = time.time()
+print('transformations took {:.4f} sec'.format(end - start))
 
 #%% [markdown]
 # Train a classifier and predict.
@@ -276,23 +315,37 @@ print('y_test:\t\t{}\tsize {}'.format(y_test.shape, y_test.size))
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 
+start = time.time()
+print('Training')
+
 # train support-vector-machine
 svm = SVC(gamma = 'auto')
 svm.fit(X_train, y_train)
 
+end = time.time()
+print('training took {:.4f} sec'.format(end - start))
+
 #%% [markdown]
 # Predict.
 
-#%% 
+#%%
+start = time.time()
+print('Prediction')
+
 predictions = svm.predict(X_test)
 
-# accuracy score
 acc_score = accuracy_score(y_test, predictions)
-print(acc_score)
+print('acc_score =', acc_score)
+
+end = time.time()
+print('prediction took {:.4f} sec'.format(end - start))
 
 #%%
 from os.path import splitext, basename, exists
 from os import makedirs
+
+start = time.time()
+print('Reconstruction')
 
 def reconstructImages(vectors):
     original_shape = (
@@ -325,3 +378,8 @@ for idx, im in enumerate(reconstructed_images):
         OUTPUT_FOLDER_PATH, basename(file), ext
     ))
     pyplot.show()
+
+end = time.time()
+print('reconstruction took {:.4f} sec'.format(end - start))
+
+print('endtime =', datetime.datetime.now())
