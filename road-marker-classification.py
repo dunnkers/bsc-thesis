@@ -6,9 +6,11 @@
 # Config.
 
 #%%
+import sklearn
+import numpy as np
+
 import sys
 import logging
-import sklearn
 import datetime
 import time
 
@@ -16,9 +18,15 @@ SIZE_NORMAL_SHAPE = (1400, 700)
 RESCALE_FACTOR = 1.0 / 7.0
     # 1.0 / 4.0 = (350,175) => 61250 elements
     # 1.0 / 7.0 = (200,100) => 20000 elements
+NEW_SHAPE = tuple((
+        np.array(SIZE_NORMAL_SHAPE) * RESCALE_FACTOR
+    ).astype('int'))
 SAMPLES_AMOUNT = 100
 OUTPUT_FOLDER_PATH = './output'
 OUTPUT_LOGFILE_PATH = './output.txt'
+CACHE_IMAGES = True
+CACHE_FOLDER_PATH = './cache'
+CACHE_OVERWRITE = False
 
 # https://stackoverflow.com/a/21475297
 from importlib import reload
@@ -33,10 +41,13 @@ logger.addHandler(fhandler)
 logger.setLevel(logging.INFO)
 
 logger.info('sklearn: {}'.format(sklearn.__version__))
-logger.info('starttime =', datetime.datetime.now())
+logger.info('numpy: {}'.format(np.__version__))
+
+logger.info('starttime = {}'.format(datetime.datetime.now()))
 
 logger.info('Resized shape: {}'.format(SIZE_NORMAL_SHAPE))
 logger.info('Rescale factor: {:.2f}'.format(RESCALE_FACTOR))
+logger.info('New shape: {}'.format(NEW_SHAPE))
 logger.info('Sample amount: {:.2f}'.format(SAMPLES_AMOUNT))
 
 #%%
@@ -102,7 +113,6 @@ def plotImgColumn(title, img, idx, cols=3, hist=True):
 # See [https://en.wikipedia.org/wiki/Otsu%27s_method](https://en.wikipedia.org/wiki/Otsu%27s_method).
 
 #%%
-import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.random import sample_without_replacement
 from sklearn.model_selection import StratifiedShuffleSplit    
@@ -123,7 +133,9 @@ class ResizeTransform(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        return np.array([resize(img, SIZE_NORMAL_SHAPE) for img in X])
+        return np.array([
+            resize(img, SIZE_NORMAL_SHAPE, mode='constant') for img in X
+            ])
 
 class RescalerTranform(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -268,8 +280,8 @@ sv_selected = selector.fit_transform((sv_flat_img, sample_idxs))
 usv_selected = selector.fit_transform((usv_flat_img, sample_idxs))
 
 ### Feature vectors
-X_train_all = zipper.fit_transform((sv_selected, usv_selected))
-y_train_all = vectorize.fit_transform(gt_selected)
+X_train = zipper.fit_transform((sv_selected, usv_selected))
+y_train = vectorize.fit_transform(gt_selected)
 
 ##### Testing
 ### Transform Ground Truth images
@@ -285,21 +297,47 @@ usv_test_resized = resizer.transform(usv_test)
 usv_test_rescaled = rescaler.transform(usv_test_resized)
 
 ### Feature vectors
-X_test_all = zipper.transform((sv_test_rescaled, usv_test_rescaled))
-y_test_all = vectorize.transform(gt_test_prepared)
-
-X_train = X_train_all
-y_train = y_train_all
-X_test = X_test_all
-y_test = y_test_all
+X_test = zipper.transform((sv_test_rescaled, usv_test_rescaled))
+y_test = vectorize.transform(gt_test_prepared)
 
 logger.info('X_train:\t{}\tsize {}'.format(X_train.shape, X_train.size))
 logger.info('y_train:\t{}\tsize {}'.format(y_train.shape, y_train.size))
-logger.info('X_test:\t\t{}\tsize {}'.format(X_test.shape, X_test.size))
-logger.info('y_test:\t\t{}\tsize {}'.format(y_test.shape, y_test.size))
+logger.info('X_test:\t{}\tsize {}'.format(X_test.shape, X_test.size))
+logger.info('y_test:\t{}\tsize {}'.format(y_test.shape, y_test.size))
 
 end = time.time()
 logger.info('transformations took {:.4f} sec'.format(end - start))
+
+#%% [markdown]
+# Optionally, save transformed images to use as a future cache.
+
+#%%
+from skimage.io import imsave
+from skimage import img_as_uint
+from os.path import splitext, basename, exists, isfile
+from os import makedirs
+
+def constructNewPath(path, new_folder, suffix = ''):
+    if not exists(new_folder):
+        makedirs(new_folder)
+
+    file, ext = splitext(path)
+    return '{}/{}{}{}'.format(
+        new_folder, basename(file), suffix, ext
+    )
+
+if (CACHE_IMAGES):
+    w, h = NEW_SHAPE
+    
+    # GT
+    for idx, im in enumerate(gt_prepared):
+        path = constructNewPath(gt.files[idx], CACHE_FOLDER_PATH + '/groundtruth',
+            '_{}x{}'.format(w, h))
+        if (not isfile(path) or CACHE_OVERWRITE):
+            imsave(path, img_as_uint(im))
+
+    pass
+
 
 #%% [markdown]
 # Train a classifier and predict.
@@ -327,51 +365,38 @@ logger.info('Prediction')
 predictions = svm.predict(X_test)
 
 acc_score = accuracy_score(y_test, predictions)
-logger.info('acc_score =', acc_score)
+logger.info('acc_score = {}'.format(acc_score))
 
 end = time.time()
 logger.info('prediction took {:.4f} sec'.format(end - start))
 
 #%%
-from os.path import splitext, basename, exists
-from os import makedirs
-
 start = time.time()
 logger.info('Reconstruction')
 
 def reconstructImages(vectors):
-    original_shape = (
-            np.array(SIZE_NORMAL_SHAPE) * RESCALE_FACTOR
-        ).astype('int')
-    images = [np.reshape(vector, original_shape) for vector in vectors]
-    return images
+    return [np.reshape(vector, NEW_SHAPE) for vector in vectors]
 
 vectors = np.split(predictions, gt_test.data.size)
 truth_vals = np.split(y_test,   gt_test.data.size)
 reconstructed_images = reconstructImages(vectors)
 
-if not exists(OUTPUT_FOLDER_PATH):
-    makedirs(OUTPUT_FOLDER_PATH)
-
 for idx, im in enumerate(reconstructed_images):
     img_acc = accuracy_score(truth_vals[idx], vectors[idx])
-    plotImgColumn("Ground truth", gt_test[idx], 1, hist=False, cols=4)
-    plotImgColumn("Supervised", sv_test[idx], 2, hist=False, cols=4)
-    plotImgColumn("Unsupervised", usv_test[idx], 3, hist=False, cols=4)
+    plotImgColumn("Ground truth", gt_test_prepared[idx], 1, hist=False, cols=4)
+    plotImgColumn("Supervised", sv_test_rescaled[idx], 2, hist=False, cols=4)
+    plotImgColumn("Unsupervised", usv_test_rescaled[idx], 3, hist=False, cols=4)
     plotImgColumn("Prediction", im, 4, hist=False, cols=4)
 
     # scale_factor=1.0/4.0; (-1000, 450)
     # scale_factor=1.0/7.0; (-500, 250)
-    pyplot.text(-500, 250, 'X_train={}, accuracy={:.4f}%'.format(
+    pyplot.text(-500, 260, 'X_train={}, accuracy={:.4f}%'.format(
         X_train.shape, img_acc*100
     ))
-    file, ext = splitext(gt.files[idx])
-    pyplot.savefig('{}/{}_fused{}'.format(
-        OUTPUT_FOLDER_PATH, basename(file), ext
-    ))
+    pyplot.savefig(constructNewPath(gt.files[idx], OUTPUT_FOLDER_PATH, '_fused'))
     pyplot.show()
 
 end = time.time()
 logger.info('reconstruction took {:.4f} sec'.format(end - start))
 
-logger.info('endtime =', datetime.datetime.now())
+logger.info('endtime = {}'.format(datetime.datetime.now()))
