@@ -2,20 +2,15 @@
 # # Road Marker classification
 # Fusing two road marker detection algorithms.
 
-#%%
-import sklearn
-import datetime
-import time
-
-print('sklearn: {}'.format(sklearn.__version__))
-print('starttime =', datetime.datetime.now())
-
 #%% [markdown]
 # Config.
 
 #%%
 import sys
 import logging
+import sklearn
+import datetime
+import time
 
 SIZE_NORMAL_SHAPE = (1400, 700)
 RESCALE_FACTOR = 1.0 / 7.0
@@ -35,16 +30,20 @@ fhandler = logging.FileHandler(filename=OUTPUT_LOGFILE_PATH, mode='a')
 formatter = logging.Formatter(logFormat)
 fhandler.setFormatter(formatter)
 logger.addHandler(fhandler)
+logger.setLevel(logging.INFO)
 
-print('Resized shape: {}'.format(SIZE_NORMAL_SHAPE))
-print('Rescale factor: {:.2f}'.format(RESCALE_FACTOR))
-print('Sample amount: {:.2f}'.format(SAMPLES_AMOUNT))
+logger.info('sklearn: {}'.format(sklearn.__version__))
+logger.info('starttime =', datetime.datetime.now())
+
+logger.info('Resized shape: {}'.format(SIZE_NORMAL_SHAPE))
+logger.info('Rescale factor: {:.2f}'.format(RESCALE_FACTOR))
+logger.info('Sample amount: {:.2f}'.format(SAMPLES_AMOUNT))
 
 #%%
 from skimage.io import imread_collection
 
 start = time.time()
-print('Image loading')
+logger.info('Image loading')
 
 ## Training
 # Ground truth
@@ -54,7 +53,7 @@ sv = imread_collection('./data/supervised/image1?.png', False)
 # Unsupervised
 usv = imread_collection('./data/unsupervised/output/output_image1?.png', False)
 
-print('gt:\t\t{}\tsv: {}\tusv: {}'.format(
+logger.info('gt:\t\t{}\tsv: {}\tusv: {}'.format(
         gt.data.shape, sv.data.shape, usv.data.shape
     ))
 assert(gt.data.shape == sv.data.shape == usv.data.shape)
@@ -67,13 +66,13 @@ sv_test = imread_collection('./data/supervised/image?.png', False)
 # Unsupervised
 usv_test = imread_collection('./data/unsupervised/output/output_image?.png', False)
 
-print('gt_test:\t{}\tsv_test: {}\tusv_test: {}'.format(
+logger.info('gt_test:\t{}\tsv_test: {}\tusv_test: {}'.format(
         gt_test.data.shape, sv_test.data.shape, usv_test.data.shape
     ))
 assert(gt_test.data.shape == sv_test.data.shape == usv_test.data.shape)
 
 end = time.time()
-print('reading images took {:.4f} sec'.format(end - start))
+logger.info('reading images took {:.4f} sec'.format(end - start))
 
 #%% [markdown]
 # Plot an image of each data type.
@@ -83,7 +82,7 @@ from matplotlib import pyplot
 from skimage.io import imshow
 
 def plotImgColumn(title, img, idx, cols=3, hist=True):
-    # print('{}:\tshape={}\tminmax=({}, {})'.format(
+    # logger.info('{}:\tshape={}\tminmax=({}, {})'.format(
     #         title, img.shape, img.min(), img.max()))
     rows = 2 if hist else 1
     pyplot.subplot(rows, cols, idx).set_title(title)
@@ -92,7 +91,7 @@ def plotImgColumn(title, img, idx, cols=3, hist=True):
         ax_hist = pyplot.subplot(rows, cols, cols + idx, label=title)
         ax_hist.hist(img.ravel(), bins=128)
 
-# print('Raw image data for training sample at index = 0:')
+# logger.info('Raw image data for training sample at index = 0:')
 # plotImgColumn("Ground truth", gt[0], 1)
 # plotImgColumn("Supervised", sv[0], 2)
 # plotImgColumn("Unsupervised", usv[0], 3)
@@ -114,7 +113,7 @@ from skimage.transform import resize, rescale
 from skimage.filters import threshold_yen
 
 start = time.time()
-print('Transformations')
+logger.info('Transformations')
 
 class ResizeTransform(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -294,13 +293,13 @@ y_train = y_train_all
 X_test = X_test_all
 y_test = y_test_all
 
-print('X_train:\t{}\tsize {}'.format(X_train.shape, X_train.size))
-print('y_train:\t{}\tsize {}'.format(y_train.shape, y_train.size))
-print('X_test:\t\t{}\tsize {}'.format(X_test.shape, X_test.size))
-print('y_test:\t\t{}\tsize {}'.format(y_test.shape, y_test.size))
+logger.info('X_train:\t{}\tsize {}'.format(X_train.shape, X_train.size))
+logger.info('y_train:\t{}\tsize {}'.format(y_train.shape, y_train.size))
+logger.info('X_test:\t\t{}\tsize {}'.format(X_test.shape, X_test.size))
+logger.info('y_test:\t\t{}\tsize {}'.format(y_test.shape, y_test.size))
 
 end = time.time()
-print('transformations took {:.4f} sec'.format(end - start))
+logger.info('transformations took {:.4f} sec'.format(end - start))
 
 #%% [markdown]
 # Train a classifier and predict.
@@ -309,36 +308,36 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 
 start = time.time()
-print('Training')
+logger.info('Training')
 
 # train support-vector-machine
 svm = SVC(gamma = 'auto')
 svm.fit(X_train, y_train)
 
 end = time.time()
-print('training took {:.4f} sec'.format(end - start))
+logger.info('training took {:.4f} sec'.format(end - start))
 
 #%% [markdown]
 # Predict.
 
 #%%
 start = time.time()
-print('Prediction')
+logger.info('Prediction')
 
 predictions = svm.predict(X_test)
 
 acc_score = accuracy_score(y_test, predictions)
-print('acc_score =', acc_score)
+logger.info('acc_score =', acc_score)
 
 end = time.time()
-print('prediction took {:.4f} sec'.format(end - start))
+logger.info('prediction took {:.4f} sec'.format(end - start))
 
 #%%
 from os.path import splitext, basename, exists
 from os import makedirs
 
 start = time.time()
-print('Reconstruction')
+logger.info('Reconstruction')
 
 def reconstructImages(vectors):
     original_shape = (
@@ -373,6 +372,6 @@ for idx, im in enumerate(reconstructed_images):
     pyplot.show()
 
 end = time.time()
-print('reconstruction took {:.4f} sec'.format(end - start))
+logger.info('reconstruction took {:.4f} sec'.format(end - start))
 
-print('endtime =', datetime.datetime.now())
+logger.info('endtime =', datetime.datetime.now())
