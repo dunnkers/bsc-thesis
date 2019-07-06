@@ -328,15 +328,20 @@ def constructNewPath(path, new_folder, suffix = ''):
 
 if (CACHE_IMAGES):
     w, h = NEW_SHAPE
-    
-    # GT
-    for idx, im in enumerate(gt_prepared):
-        path = constructNewPath(gt.files[idx], CACHE_FOLDER_PATH + '/groundtruth',
+    def saveIm(filepath, im, folder_suffix):
+        path = constructNewPath(filepath, CACHE_FOLDER_PATH + folder_suffix,
             '_{}x{}'.format(w, h))
         if (not isfile(path) or CACHE_OVERWRITE):
             imsave(path, img_as_uint(im))
+    
+    for idx, im in enumerate(gt_prepared):
+        saveIm(gt.files[idx], im, '/groundtruth')
 
-    pass
+    for idx, im in enumerate(sv_rescaled):
+        saveIm(sv.files[idx], im, '/supervised')
+
+    for idx, im in enumerate(usv_rescaled):
+        saveIm(usv.files[idx], im, '/unsupervised')
 
 
 #%% [markdown]
