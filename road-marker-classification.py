@@ -67,9 +67,9 @@ sv = imread_collection('./data/supervised/{}'.format(train_glob))
 usv = imread_collection('./data/unsupervised/output/output_{}'.format(train_glob))
 
 logger.info('gt:\t\t{}\tsv: {}\tusv: {}'.format(
-        gt.data.shape, sv.data.shape, usv.data.shape
+        np.size(gt.files), np.size(sv.files), np.size(usv.files)
     ))
-assert(gt.data.shape == sv.data.shape == usv.data.shape)
+assert(np.size(gt.files) == np.size(sv.files) == np.size(usv.files))
 
 ## Testing
 test_glob = 'image1?.png'
@@ -81,9 +81,9 @@ sv_test = imread_collection('./data/supervised/{}'.format(test_glob))
 usv_test = imread_collection('./data/unsupervised/output/output_{}'.format(test_glob))
 
 logger.info('gt_test:\t{}\tsv_test: {}\tusv_test: {}'.format(
-        gt_test.data.shape, sv_test.data.shape, usv_test.data.shape
+        np.size(gt_test.files), np.size(sv_test.files), np.size(usv_test.files)
     ))
-assert(gt_test.data.shape == sv_test.data.shape == usv_test.data.shape)
+assert(np.size(gt_test.files) == np.size(sv_test.files) == np.size(usv_test.files))
 
 end = time.time()
 logger.info('reading images took {:.4f} sec'.format(end - start))
