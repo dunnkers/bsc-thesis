@@ -440,7 +440,7 @@ for idx, im in enumerate(reconstructed_images):
     pyplot.text(-500, 260, 'X_train={}, accuracy={:.4f}%'.format(
         X_train.shape, img_acc*100
     ))
-    pyplot.savefig(constructNewPath(gt.files[idx], OUTPUT_FOLDER_PATH, '_fused'))
+    pyplot.savefig(constructNewPath(gt_test.files[idx], OUTPUT_FOLDER_PATH, '_fused'))
     pyplot.show()
 
 end = time.time()
