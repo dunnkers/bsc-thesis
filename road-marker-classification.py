@@ -56,13 +56,15 @@ from skimage.io import imread_collection
 start = time.time()
 logger.info('Image loading')
 
+
 ## Training
+train_glob = 'image?.png'
 # Ground truth
-gt = imread_collection('./data/groundtruth/image1?.png', False)
+gt = imread_collection('./data/groundtruth/{}'.format(train_glob))
 # Supervised
-sv = imread_collection('./data/supervised/image1?.png', False)
+sv = imread_collection('./data/supervised/{}'.format(train_glob))
 # Unsupervised
-usv = imread_collection('./data/unsupervised/output/output_image1?.png', False)
+usv = imread_collection('./data/unsupervised/output/output_{}'.format(train_glob))
 
 logger.info('gt:\t\t{}\tsv: {}\tusv: {}'.format(
         gt.data.shape, sv.data.shape, usv.data.shape
@@ -70,12 +72,13 @@ logger.info('gt:\t\t{}\tsv: {}\tusv: {}'.format(
 assert(gt.data.shape == sv.data.shape == usv.data.shape)
 
 ## Testing
+test_glob = 'image1?.png'
 # Ground truth
-gt_test = imread_collection('./data/groundtruth/image?.png', False)
+gt_test = imread_collection('./data/groundtruth/{}'.format(test_glob))
 # Supervised
-sv_test = imread_collection('./data/supervised/image?.png', False)
+sv_test = imread_collection('./data/supervised/{}'.format(test_glob))
 # Unsupervised
-usv_test = imread_collection('./data/unsupervised/output/output_image?.png', False)
+usv_test = imread_collection('./data/unsupervised/output/output_{}'.format(test_glob))
 
 logger.info('gt_test:\t{}\tsv_test: {}\tusv_test: {}'.format(
         gt_test.data.shape, sv_test.data.shape, usv_test.data.shape
@@ -134,7 +137,10 @@ class ResizeTransform(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         return np.array([
-            resize(img, SIZE_NORMAL_SHAPE, mode='constant') for img in X
+            resize(
+                    img, SIZE_NORMAL_SHAPE,
+                    mode='reflect', anti_aliasing=True
+                ) for img in X
             ])
 
 class RescalerTranform(BaseEstimator, TransformerMixin):
@@ -145,7 +151,12 @@ class RescalerTranform(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        return np.array([rescale(img, RESCALE_FACTOR) for img in X])
+        return np.array([
+            rescale(
+                    img, RESCALE_FACTOR,
+                    mode='reflect', anti_aliasing=True, multichannel=False
+                ) for img in X
+            ])
 
 class ThresholdingTransform(BaseEstimator, TransformerMixin):
     def __init__(self):
