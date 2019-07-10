@@ -1,6 +1,7 @@
 .vscode/settings.json
 /data
 /data.zip
+/data_100x200
 /output
 output.txt
 /cache

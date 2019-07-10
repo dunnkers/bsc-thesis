@@ -57,14 +57,18 @@ start = time.time()
 logger.info('Image loading')
 
 
+data_folder = './data_100x200'
+gt_folder = '{}/groundtruth/'.format(data_folder)
+sv_folder = '{}/supervised/'.format(data_folder)
+usv_prefix = '{}/unsupervised/output/output_'.format(data_folder)
 ## Training
 train_glob = 'image?.png'
 # Ground truth
-gt = imread_collection('./data/groundtruth/{}'.format(train_glob))
+gt = imread_collection('{}{}'.format(gt_folder, train_glob))
 # Supervised
-sv = imread_collection('./data/supervised/{}'.format(train_glob))
+sv = imread_collection('{}{}'.format(sv_folder, train_glob))
 # Unsupervised
-usv = imread_collection('./data/unsupervised/output/output_{}'.format(train_glob))
+usv = imread_collection('{}{}'.format(usv_prefix, train_glob))
 
 logger.info('gt:\t\t{}\tsv: {}\tusv: {}'.format(
         np.size(gt.files), np.size(sv.files), np.size(usv.files)
@@ -74,11 +78,11 @@ assert(np.size(gt.files) == np.size(sv.files) == np.size(usv.files))
 ## Testing
 test_glob = 'image1?.png'
 # Ground truth
-gt_test = imread_collection('./data/groundtruth/{}'.format(test_glob))
+gt_test = imread_collection('{}{}'.format(gt_folder, test_glob))
 # Supervised
-sv_test = imread_collection('./data/supervised/{}'.format(test_glob))
+sv_test = imread_collection('{}{}'.format(sv_folder, test_glob))
 # Unsupervised
-usv_test = imread_collection('./data/unsupervised/output/output_{}'.format(test_glob))
+usv_test = imread_collection('{}{}'.format(usv_prefix, test_glob))
 
 logger.info('gt_test:\t{}\tsv_test: {}\tusv_test: {}'.format(
         np.size(gt_test.files), np.size(sv_test.files), np.size(usv_test.files)
@@ -120,6 +124,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.random import sample_without_replacement
 from sklearn.model_selection import StratifiedShuffleSplit    
 from sklearn.utils import resample
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer
 
 from skimage.color import rgb2gray
 from skimage.transform import resize, rescale
@@ -196,7 +202,7 @@ class FlattenTransformer(BaseEstimator, TransformerMixin):
         return self
     
     def transform(self, X, y = None):
-        return [img.flatten() for img in X]
+        return np.array([img.flatten() for img in X])
 
 class ZipperTransformer(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -266,24 +272,43 @@ flatten = FlattenTransformer()
 sampler = SamplerTransformer(sample_size=SAMPLES_AMOUNT)
 selector = SelectTransformer()
 
+# def resizeImages(X):
+#     return np.array([resize(img, SIZE_NORMAL_SHAPE,
+#                     mode='reflect', anti_aliasing=True) for img in X])
+# resizer = FunctionTransformer(resizeImages)
+
+# from sklearn.svm import SVC
+# svc = SVC(gamma = 'auto')
+# gt_transformer = Pipeline([
+#     ('grayify', grayify),
+#     ('resizer', resizer),
+#     ('rescaler', rescaler),
+#     ('thresholder', thresholder),
+#     ('svc', svc)
+# ])
+# gt_transformed = gt_transformer.fit_transform(gt)
+
 ##### Training
 ### Transform Ground Truth images
-gt_grayed = grayify.fit_transform(gt)
-gt_resized = resizer.fit_transform(gt_grayed)
-gt_rescaled = rescaler.fit_transform(gt_resized)
-gt_prepared = thresholder.fit_transform(gt_rescaled)
+# gt_grayed = grayify.fit_transform(gt)
+# gt_resized = resizer.fit_transform(gt_grayed)
+# gt_rescaled = rescaler.fit_transform(gt_resized)
+# gt_prepared = thresholder.fit_transform(gt_rescaled)
+gt_prepared = thresholder.fit_transform(gt) # CACHED
 # Sample
 gt_flat_img = flatten.fit_transform(gt_prepared)
 sample_idxs = sampler.fit_transform(gt_flat_img)
 
 ### Transform SV and USV images
-sv_resized = resizer.fit_transform(sv)
-sv_rescaled = rescaler.fit_transform(sv_resized)
-usv_resized = resizer.fit_transform(usv)
-usv_rescaled = rescaler.fit_transform(usv_resized)
+# sv_resized = resizer.fit_transform(sv)
+# sv_rescaled = rescaler.fit_transform(sv_resized)
+# usv_resized = resizer.fit_transform(usv)
+# usv_rescaled = rescaler.fit_transform(usv_resized)
 # Sample
-sv_flat_img = flatten.fit_transform(sv_rescaled)
-usv_flat_img = flatten.fit_transform(usv_rescaled)
+# sv_flat_img = flatten.fit_transform(sv_rescaled)
+# usv_flat_img = flatten.fit_transform(usv_rescaled)
+sv_flat_img = flatten.fit_transform(sv) # CACHED
+usv_flat_img = flatten.fit_transform(usv) # CACHED
 
 ### Select indices per-image
 gt_selected = selector.fit_transform((gt_flat_img, sample_idxs))
@@ -296,19 +321,23 @@ y_train = vectorize.fit_transform(gt_selected)
 
 ##### Testing
 ### Transform Ground Truth images
-gt_test_grayed = grayify.transform(gt_test)
-gt_test_resized = resizer.transform(gt_test_grayed)
-gt_test_rescaled = rescaler.transform(gt_test_resized)
-gt_test_prepared = thresholder.transform(gt_test_rescaled)
+# gt_test_grayed = grayify.transform(gt_test)
+# gt_test_resized = resizer.transform(gt_test_grayed)
+# gt_test_rescaled = rescaler.transform(gt_test_resized)
+# gt_test_prepared = thresholder.transform(gt_test_rescaled)
+gt_test_prepared = thresholder.fit_transform(gt_test) # CACHED
 
 ### Transform SV and USV images
-sv_test_resized = resizer.transform(sv_test)
-sv_test_rescaled = rescaler.transform(sv_test_resized)
-usv_test_resized = resizer.transform(usv_test)
-usv_test_rescaled = rescaler.transform(usv_test_resized)
+# sv_test_resized = resizer.transform(sv_test)
+# sv_test_rescaled = rescaler.transform(sv_test_resized)
+# usv_test_resized = resizer.transform(usv_test)
+# usv_test_rescaled = rescaler.transform(usv_test_resized)
 
 ### Feature vectors
-X_test = zipper.transform((sv_test_rescaled, usv_test_rescaled))
+# X_test = zipper.transform((sv_test_rescaled, usv_test_rescaled))
+sv_test_flat_img = flatten.transform(sv_test)
+usv_test_flat_img = flatten.transform(usv_test)
+X_test = zipper.transform((sv_test_flat_img, usv_test_flat_img)) # CACHED
 y_test = vectorize.transform(gt_test_prepared)
 
 logger.info('X_train:\t{}\tsize {}'.format(X_train.shape, X_train.size))
@@ -323,10 +352,10 @@ logger.info('transformations took {:.4f} sec'.format(end - start))
 # Optionally, save transformed images to use as a future cache.
 
 #%%
-from skimage.io import imsave
-from skimage import img_as_uint
-from os.path import splitext, basename, exists, isfile
-from os import makedirs
+# from skimage.io import imsave
+# from skimage import img_as_uint
+# from os.path import splitext, basename, exists, isfile
+# from os import makedirs
 
 def constructNewPath(path, new_folder, suffix = ''):
     if not exists(new_folder):
@@ -337,22 +366,22 @@ def constructNewPath(path, new_folder, suffix = ''):
         new_folder, basename(file), suffix, ext
     )
 
-if (CACHE_IMAGES):
-    w, h = NEW_SHAPE
-    def saveIm(filepath, im, folder_suffix):
-        path = constructNewPath(filepath, CACHE_FOLDER_PATH + folder_suffix,
-            '_{}x{}'.format(w, h))
-        if (not isfile(path) or CACHE_OVERWRITE):
-            imsave(path, img_as_uint(im))
+# if (CACHE_IMAGES):
+#     w, h = NEW_SHAPE
+#     def saveIm(filepath, im, folder_suffix):
+#         path = constructNewPath(filepath, CACHE_FOLDER_PATH + folder_suffix,
+#             '_{}x{}'.format(w, h))
+#         if (not isfile(path) or CACHE_OVERWRITE):
+#             imsave(path, img_as_uint(im))
     
-    for idx, im in enumerate(gt_prepared):
-        saveIm(gt.files[idx], im, '/groundtruth')
+#     for idx, im in enumerate(gt_prepared):
+#         saveIm(gt.files[idx], im, '/groundtruth')
 
-    for idx, im in enumerate(sv_rescaled):
-        saveIm(sv.files[idx], im, '/supervised')
+#     for idx, im in enumerate(sv_rescaled):
+#         saveIm(sv.files[idx], im, '/supervised')
 
-    for idx, im in enumerate(usv_rescaled):
-        saveIm(usv.files[idx], im, '/unsupervised')
+#     for idx, im in enumerate(usv_rescaled):
+#         saveIm(usv.files[idx], im, '/unsupervised')
 
 
 #%% [markdown]
@@ -393,15 +422,17 @@ logger.info('Reconstruction')
 def reconstructImages(vectors):
     return [np.reshape(vector, NEW_SHAPE) for vector in vectors]
 
-vectors = np.split(predictions, gt_test.data.size)
-truth_vals = np.split(y_test,   gt_test.data.size)
+vectors = np.split(predictions, np.size(gt_test.files))
+truth_vals = np.split(y_test,   np.size(gt_test.files))
 reconstructed_images = reconstructImages(vectors)
 
 for idx, im in enumerate(reconstructed_images):
     img_acc = accuracy_score(truth_vals[idx], vectors[idx])
     plotImgColumn("Ground truth", gt_test_prepared[idx], 1, hist=False, cols=4)
-    plotImgColumn("Supervised", sv_test_rescaled[idx], 2, hist=False, cols=4)
-    plotImgColumn("Unsupervised", usv_test_rescaled[idx], 3, hist=False, cols=4)
+    # plotImgColumn("Supervised", sv_test_rescaled[idx], 2, hist=False, cols=4)
+    # plotImgColumn("Unsupervised", usv_test_rescaled[idx], 3, hist=False, cols=4)
+    plotImgColumn("Supervised", sv_test[idx], 2, hist=False, cols=4) # CACHED
+    plotImgColumn("Unsupervised", usv_test[idx], 3, hist=False, cols=4) # CACHED
     plotImgColumn("Prediction", im, 4, hist=False, cols=4)
 
     # scale_factor=1.0/4.0; (-1000, 450)
