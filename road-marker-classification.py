@@ -62,7 +62,7 @@ gt_folder = '{}/groundtruth/'.format(data_folder)
 sv_folder = '{}/supervised/'.format(data_folder)
 usv_prefix = '{}/unsupervised/output/output_'.format(data_folder)
 ## Training
-train_glob = 'image?.png'
+train_glob = 'image???.png'
 # Ground truth
 gt = imread_collection('{}{}'.format(gt_folder, train_glob))
 # Supervised
@@ -76,7 +76,7 @@ logger.info('gt:\t\t{}\tsv: {}\tusv: {}'.format(
 assert(np.size(gt.files) == np.size(sv.files) == np.size(usv.files))
 
 ## Testing
-test_glob = 'image1?.png'
+test_glob = 'image??.png'
 # Ground truth
 gt_test = imread_collection('{}{}'.format(gt_folder, test_glob))
 # Supervised
@@ -192,7 +192,7 @@ class ToVectorTransformer(BaseEstimator, TransformerMixin):
         return self
     
     def transform(self, X, y = None):
-        return X.flatten()
+        return X.ravel() # @FIXME USE ravel()
 
 class FlattenTransformer(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -202,18 +202,7 @@ class FlattenTransformer(BaseEstimator, TransformerMixin):
         return self
     
     def transform(self, X, y = None):
-        return np.array([img.flatten() for img in X])
-
-class ZipperTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self):
-        pass
-
-    def fit(self, X, y = None):
-        return self
-    
-    def transform(self, X, y = None):
-        a, b = X
-        return np.array((a.flatten(), b.flatten())).T
+        return np.array([img.ravel() for img in X]) # @FIXME USE ravel()
 
 class SamplerTransformer(BaseEstimator, TransformerMixin):
     """ Sample size set to the class minority by default.
@@ -244,7 +233,7 @@ class SamplerTransformer(BaseEstimator, TransformerMixin):
                     for split in splitted
             ])
 
-            return resampled.flatten()
+            return resampled.ravel() # @FIXME USE ravel()
 
         return np.array([sample(vector) for vector in X])
 
@@ -261,6 +250,17 @@ class SelectTransformer(BaseEstimator, TransformerMixin):
         return np.array([
             vector[select] for vector, select in zip(data, indexes)
             ])
+
+class ZipperTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y = None):
+        return self
+    
+    def transform(self, X, y = None):
+        a, b = X
+        return np.array((a.ravel(), b.ravel())).T # @FIXME USE ravel()
 
 grayify = RGB2GrayTransformer()
 resizer = ResizeTransform()
@@ -316,8 +316,26 @@ sv_selected = selector.fit_transform((sv_flat_img, sample_idxs))
 usv_selected = selector.fit_transform((usv_flat_img, sample_idxs))
 
 ### Feature vectors
-X_train = zipper.fit_transform((sv_selected, usv_selected))
-y_train = vectorize.fit_transform(gt_selected)
+# X_train = zipper.fit_transform((sv_selected, usv_selected))
+# y_train = vectorize.fit_transform(gt_selected)
+
+def makeX(sv, usv):
+    X = []
+    for a, b in zip(sv, usv):
+        piece = np.array((a.ravel(), b.ravel())).T
+        X.extend(piece)
+    X = np.array(X) # expensive operation?
+    return X
+
+def makeY(gt):
+    y = []
+    for sampleblock in gt:
+        y.extend(sampleblock)
+    y = np.array(y) # expensive operation?
+    return y
+
+X_train = makeX(sv_selected, usv_selected)
+y_train = makeY(gt_selected)
 
 ##### Testing
 ### Transform Ground Truth images
@@ -337,8 +355,11 @@ gt_test_prepared = thresholder.fit_transform(gt_test) # CACHED
 # X_test = zipper.transform((sv_test_rescaled, usv_test_rescaled))
 sv_test_flat_img = flatten.transform(sv_test)
 usv_test_flat_img = flatten.transform(usv_test)
-X_test = zipper.transform((sv_test_flat_img, usv_test_flat_img)) # CACHED
-y_test = vectorize.transform(gt_test_prepared)
+# X_test = zipper.transform((sv_test_flat_img, usv_test_flat_img)) # CACHED
+# y_test = vectorize.transform(gt_test_prepared)
+
+X_test = makeX(sv_test_flat_img, usv_test_flat_img)
+y_test = makeY(gt_test_prepared)
 
 logger.info('X_train:\t{}\tsize {}'.format(X_train.shape, X_train.size))
 logger.info('y_train:\t{}\tsize {}'.format(y_train.shape, y_train.size))
@@ -354,8 +375,8 @@ logger.info('transformations took {:.4f} sec'.format(end - start))
 #%%
 # from skimage.io import imsave
 # from skimage import img_as_uint
-# from os.path import splitext, basename, exists, isfile
-# from os import makedirs
+from os.path import splitext, basename, exists, isfile
+from os import makedirs
 
 def constructNewPath(path, new_folder, suffix = ''):
     if not exists(new_folder):
@@ -384,6 +405,20 @@ def constructNewPath(path, new_folder, suffix = ''):
 #         saveIm(usv.files[idx], im, '/unsupervised')
 
 
+#%%
+# import pickle
+# with open('X_train.pickle', 'wb') as handle:
+#     pickle.dump(X_train, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# with open('y_train.pickle', 'wb') as handle:
+#     pickle.dump(y_train, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# with open('X_test.pickle', 'wb') as handle:
+#     pickle.dump(X_test, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# with open('y_test.pickle', 'wb') as handle:
+#     pickle.dump(y_test, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# # with open('filename.pickle', 'rb') as handle:
+# #     b = pickle.load(handle)
+
+
 #%% [markdown]
 # Train a classifier and predict.
 
@@ -394,7 +429,7 @@ start = time.time()
 logger.info('Training')
 
 # train support-vector-machine
-svm = SVC(gamma = 'auto')
+svm = SVC(gamma = 'auto', verbose=True)
 svm.fit(X_train, y_train)
 
 end = time.time()
