@@ -355,11 +355,17 @@ gt_test_prepared = thresholder.fit_transform(gt_test) # CACHED
 # X_test = zipper.transform((sv_test_rescaled, usv_test_rescaled))
 sv_test_flat_img = flatten.transform(sv_test)
 usv_test_flat_img = flatten.transform(usv_test)
-# X_test = zipper.transform((sv_test_flat_img, usv_test_flat_img)) # CACHED
-# y_test = vectorize.transform(gt_test_prepared)
 
+# X_test = zipper.transform((sv_test_flat_img, usv_test_flat_img)) # CACHED
+
+# We -can- use normal vectorize transform for y_test, because instead of 
+# y_train, y_test is actually always homogeneous in shape, because we do not
+# sample the data in any way. (we test every pixel of the input image.)
+# (could also do this for X_test, should measure what is faster...)
 X_test = makeX(sv_test_flat_img, usv_test_flat_img)
-y_test = makeY(gt_test_prepared)
+
+y_test = vectorize.transform(gt_test_prepared)
+# y_test = makeY(gt_test_prepared) # y_test doesn't work with makeY, apparently
 
 logger.info('X_train:\t{}\tsize {}'.format(X_train.shape, X_train.size))
 logger.info('y_train:\t{}\tsize {}'.format(y_train.shape, y_train.size))
@@ -463,6 +469,10 @@ reconstructed_images = reconstructImages(vectors)
 
 for idx, im in enumerate(reconstructed_images):
     img_acc = accuracy_score(truth_vals[idx], vectors[idx])
+    logger.info('{} acc_score={}'.format(
+        constructNewPath(gt_test.files[idx], OUTPUT_FOLDER_PATH, '_fused'),
+        img_acc
+    ))
     plotImgColumn("Ground truth", gt_test_prepared[idx], 1, hist=False, cols=4)
     # plotImgColumn("Supervised", sv_test_rescaled[idx], 2, hist=False, cols=4)
     # plotImgColumn("Unsupervised", usv_test_rescaled[idx], 3, hist=False, cols=4)
@@ -482,3 +492,5 @@ end = time.time()
 logger.info('reconstruction took {:.4f} sec'.format(end - start))
 
 logger.info('endtime = {}'.format(datetime.datetime.now()))
+
+#%%
