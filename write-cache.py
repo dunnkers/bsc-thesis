@@ -1,19 +1,30 @@
 #%%
 import constants as const
-print('DATA_PATH =', const.DATA_PATH)
-print('GT_GLOB =', const.GT_GLOB)
-print('SV_GLOB =', const.SV_GLOB)
-print('USV_GLOB =', const.USV_GLOB)
-
-#%%
 from os.path import exists, dirname
-from skimage.io import imsave
+from skimage.io import imread_collection, imsave
 from skimage.transform import resize
 from skimage.exposure import rescale_intensity
+from skimage.color import rgb2gray
+from skimage.util import img_as_bool
 from os import makedirs
-from tqdm import tqdm
+from tqdm.auto import tqdm
+from warnings import catch_warnings, simplefilter
 
-def cache_image(im, path, shape):
+print('GT_DATA_GLOB   =', const.GT_DATA_GLOB)
+print('SV_DATA_GLOB   =', const.SV_DATA_GLOB)
+print('USV_DATA_GLOB  =', const.USV_DATA_GLOB)
+print('CACHES    =', const.CACHES)
+
+def transform_image(im):
+    # ensure grayscale
+    im = rgb2gray(im)
+
+    # stretch contrast
+    im = rescale_intensity(im)
+
+    return im
+
+def cache_image(im, path, shape, transform=transform_image):
     """
     Saves a cache version of the image if it does not exist.
 
@@ -26,20 +37,20 @@ def cache_image(im, path, shape):
     if not exists(dirpath):
         makedirs(dirpath)
     
-    # rescale,.. or,.. 
-    # import warnings
+    with catch_warnings(): # prevent contrast warnings.
+        simplefilter("ignore")
 
-    # with warnings.catch_warnings():
-    #     warnings.simplefilter("ignore")
+        # resize & custom transform
+        im = resize(im, shape, mode='reflect', anti_aliasing=True)
+        im = transform(im)
 
-    imsave(path, resize(rescale_intensity(im), shape, mode='reflect', anti_aliasing=True),
-        check_contrast=False)
-    pass
+        # save
+        imsave(path, im, check_contrast=False) # check_contrast is skimage>=0.16
 
 def get_impath_cached(impath, cachepath):
     return impath.replace(const.DATA_PATH, cachepath, 1)
 
-def cache_collection(ic, desc='Caching image collection'):
+def cache_collection(ic, transform=transform_image, desc='Caching'):
     """
     Checks for every image in this collection whether it is
     cached. In case no, it caches a resized image.
@@ -54,16 +65,16 @@ def cache_collection(ic, desc='Caching image collection'):
             if not exists(impath_cached):
                 cache_image(ic[idx], impath_cached, shape)
 
-#%%
-from skimage.io import imread_collection
+def gt_transform(im):
+    return img_as_bool(im)
 
-images = imread_collection(const.GT_GLOB)
-cache_collection(images, desc='Caching groundtruth')
+images = imread_collection(const.GT_DATA_GLOB)
+cache_collection(images, transform=gt_transform, desc='Caching  groundtruth')
 
-images = imread_collection(const.SV_GLOB)
-cache_collection(images, desc='Caching supervised')
+images = imread_collection(const.SV_DATA_GLOB)
+cache_collection(images, desc='Caching   supervised')
 
-images = imread_collection(const.USV_GLOB)
+images = imread_collection(const.USV_DATA_GLOB)
 cache_collection(images, desc='Caching unsupervised')
 
-print('end')
+print('Finished caching.')
