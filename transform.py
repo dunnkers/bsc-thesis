@@ -17,6 +17,13 @@ gt  = imread_collection(const.GT_GLOB)
 sv  = imread_collection(const.SV_GLOB)
 usv = imread_collection(const.USV_GLOB)
 
+# PLOT
+# from matplotlib import pyplot
+# from skimage.io import imshow
+# imshow(gt[0])
+# print(gt[0])
+# pyplot.show()
+
 class SamplerTransformer(BaseEstimator, TransformerMixin):
     """ Sample size set to the class minority by default.
         Can specify custom sample size. """
@@ -33,7 +40,10 @@ class SamplerTransformer(BaseEstimator, TransformerMixin):
         """
         # compute vector classes with `np.unique`
         classes, counts = np.unique(vector, return_counts=True)
-        assert classes.size == 2, 'sampler expects just 2 classes.'
+        assert classes.size > 2, 'sampler expects no more than 2 classes'
+        assert classes.size == 0, 'sampler detected no classes at all'
+        if (classes.size == 1):
+            return np.array([]) # e.g. when no road markings
 
         # split vector by its classes
         splitted = [np.where(vector == classname)[0] for classname in classes]

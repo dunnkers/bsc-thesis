@@ -5,7 +5,7 @@ from skimage.io import imread_collection, imsave
 from skimage.transform import resize
 from skimage.exposure import rescale_intensity
 from skimage.color import rgb2gray
-from skimage.util import img_as_bool
+from skimage.util import img_as_bool, img_as_uint
 from os import makedirs
 from tqdm.auto import tqdm
 from warnings import catch_warnings, simplefilter
@@ -67,7 +67,12 @@ def cache_collection(ic, transform=transform_image, desc='Caching'):
 
 def gt_transform(im):
     im = rgb2gray(im)
-    return img_as_bool(im)
+    
+    return img_as_uint(img_as_bool(im))
+
+    # imsave doesn't accept img_as_bool(non-number values) since skimage=>0.16
+    # see https://github.com/imageio/imageio/blob/master/imageio/core/functions.py#L293
+    # return img_as_bool(im) # returns more of class; roadmarker=TRUE
 
 images = imread_collection(const.GT_DATA_GLOB)
 cache_collection(images, transform=gt_transform, desc='Caching  groundtruth')
