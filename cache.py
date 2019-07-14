@@ -63,9 +63,10 @@ def cache_collection(ic, transform=transform_image, desc='Caching'):
             impath_cached = get_impath_cached(impath, cachepath)
 
             if not exists(impath_cached):
-                cache_image(ic[idx], impath_cached, shape)
+                cache_image(ic[idx], impath_cached, shape, transform=transform)
 
 def gt_transform(im):
+    im = rgb2gray(im)
     return img_as_bool(im)
 
 images = imread_collection(const.GT_DATA_GLOB)

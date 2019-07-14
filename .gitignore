@@ -4,5 +4,5 @@
 /data_100x200
 /output
 output.txt
-/cache*
+/cache_*
 __pycache__
