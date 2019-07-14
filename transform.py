@@ -40,10 +40,9 @@ class SamplerTransformer(BaseEstimator, TransformerMixin):
         """
         # compute vector classes with `np.unique`
         classes, counts = np.unique(vector, return_counts=True)
-        assert classes.size > 2, 'sampler expects no more than 2 classes'
-        assert classes.size == 0, 'sampler detected no classes at all'
-        if (classes.size == 1):
-            return np.array([]) # e.g. when no road markings
+        assert not classes.size > 2, 'sampler expects no more than 2 classes'
+        if (classes.size == 0 or classes.size == 1):
+            return [] # e.g. when no road markings
 
         # split vector by its classes
         splitted = [np.where(vector == classname)[0] for classname in classes]
@@ -59,21 +58,6 @@ class SamplerTransformer(BaseEstimator, TransformerMixin):
     
     def transform(self, X, y = None):
         return [self.sample(vector) for vector in tqdm(X, desc='Sampling')]
-
-def makeX(sv, usv):
-    X = []
-    for a, b in zip(sv, usv):
-        piece = np.array((a.ravel(), b.ravel())).T
-        X.extend(piece)
-    X = np.array(X) # expensive operation?
-    return X
-
-def makeY(gt):
-    y = []
-    for sampleblock in gt:
-        y.extend(sampleblock)
-    y = np.array(y) # expensive operation?
-    return y
 
 def im2vec(im):
     """ Flatten 2D image to a 1D vector. Note that `ravel` creates a view,
@@ -100,13 +84,16 @@ usv = vectorize.fit_transform(usv) # replace because using `ravel`
 # use ground truth to get sample indexes - with classes balanced.
 samples = sampler.fit_transform(gt)
 
-gt = selector.fit_transform((gt, samples))
-sv = selector.fit_transform((sv, samples))
+gt  = selector.fit_transform((gt, samples))
+sv  = selector.fit_transform((sv, samples))
 usv = selector.fit_transform((usv, samples))
 
-# np.hstack
+y = np.hstack(gt)
+X = np.stack((np.hstack(sv), np.hstack(usv)), axis=-1)
 
-# X_train = makeX(sv_selected, usv_selected)
-# y_train = makeY(gt_selected)
+#%%
+from sklearn.svm import SVC
+svm = SVC(gamma = 'auto', verbose=True)
+svm.fit(X, y)
 
 print('end')
