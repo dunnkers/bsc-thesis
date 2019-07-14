@@ -71,23 +71,26 @@ def ic2vecs(ic):
 def select_ic(X):
     """ Select certain indices from  """
     data, samples = X
-    return [vector[indexes] for vector, indexes in zip(data, samples)]
+    return [vector[indexes] for vector, indexes in 
+        tqdm(zip(data, samples), desc='Selecting samples')]
 
+# Vectorize
 vectorize = FunctionTransformer(ic2vecs, validate=False)
-sampler = SamplerTransformer(sample_size=const.SAMPLES)
-selector = FunctionTransformer(select_ic, validate=False)
-
 gt  = vectorize.fit_transform(gt)  # replace because using `ravel`
 sv  = vectorize.fit_transform(sv)  # replace because using `ravel`
 usv = vectorize.fit_transform(usv) # replace because using `ravel`
 
-# use ground truth to get sample indexes - with classes balanced.
-samples = sampler.fit_transform(gt)
+# Sample
+sampler = SamplerTransformer(sample_size=const.SAMPLES)
+samples = sampler.fit_transform(gt) # use gt to get sample; classes balanced.
 
+# Select samples
+selector = FunctionTransformer(select_ic, validate=False)
 gt  = selector.fit_transform((gt, samples))
 sv  = selector.fit_transform((sv, samples))
 usv = selector.fit_transform((usv, samples))
 
+# Combine into 1D arrays
 y = np.hstack(gt)
 X = np.stack((np.hstack(sv), np.hstack(usv)), axis=-1)
 
