@@ -10,10 +10,10 @@ mkdir output
 cd ../../
 
 cd data/groundtruth
-find . -maxdepth 1 -iname "*.png" | xargs -L1 -I{} convert -resize 100x200! "{}" ../../data_100x200/groundtruth/"{}"
+find . -maxdepth 1 -iname "*.png" | xargs -L1 -I{} convert -resize 100X200! "{}" ../../data_100x200/groundtruth/"{}"
 
 cd ../supervised
-find . -maxdepth 1 -iname "*.png" | xargs -L1 -I{} convert -resize 100x200! "{}" ../../data_100x200/supervised/"{}"
+find . -maxdepth 1 -iname "*.png" | xargs -L1 -I{} convert -resize 100X200! "{}" ../../data_100x200/supervised/"{}"
 
 cd ../unsupervised/output
-find . -maxdepth 1 -iname "*.png" | xargs -L1 -I{} convert -resize 100x200! "{}" ../../../data_100x200/unsupervised/output/"{}"
+find . -maxdepth 1 -iname "*.png" | xargs -L1 -I{} convert -resize 100X200! "{}" ../../../data_100x200/unsupervised/output/"{}"
