@@ -7,6 +7,7 @@ from sklearn.utils import resample
 from sklearn.preprocessing import FunctionTransformer
 import numpy as np
 from tqdm.auto import tqdm
+import pickle
 
 print('GT_GLOB   =', const.GT_GLOB)
 print('SV_GLOB   =', const.SV_GLOB)
@@ -16,6 +17,8 @@ print('CACHE     =', const.CACHE)
 gt  = imread_collection(const.GT_GLOB)
 sv  = imread_collection(const.SV_GLOB)
 usv = imread_collection(const.USV_GLOB)
+
+set_size = np.size(gt.files)
 
 # PLOT
 # from matplotlib import pyplot
@@ -71,8 +74,7 @@ def ic2vecs(ic):
 def select_ic(X):
     """ Select certain indices from  """
     data, samples = X
-    return [vector[indexes] for vector, indexes in 
-        tqdm(zip(data, samples), desc='Selecting samples')]
+    return [vector[indexes] for vector, indexes in zip(data, samples)]
 
 # Vectorize
 vectorize = FunctionTransformer(ic2vecs, validate=False)
@@ -91,12 +93,14 @@ sv  = selector.fit_transform((sv, samples))
 usv = selector.fit_transform((usv, samples))
 
 # Combine into 1D arrays
-y = np.hstack(gt)
+print('Stacking arrays...')
 X = np.stack((np.hstack(sv), np.hstack(usv)), axis=-1)
+y = np.hstack(gt)
+print('Arrays stacked.')
 
-#%%
-from sklearn.svm import SVC
-svm = SVC(gamma = 'auto', verbose=True)
-svm.fit(X, y)
+# Save picklefile
+picklepath = '{}_n={}.pickle'.format(const.CACHE.path, set_size)
+with open(picklepath, 'wb') as handle:
+    pickle.dump((X, y), handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 print('end')
