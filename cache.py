@@ -19,8 +19,8 @@ def transform_image(im):
     # ensure grayscale
     im = rgb2gray(im)
 
-    # stretch contrast
-    im = rescale_intensity(im)
+    # # stretch contrast
+    # im = rescale_intensity(im)
 
     return im
 
