@@ -103,6 +103,7 @@ def prepare_cache(cache):
         'n_splits': N_FOLDS,
         'cachepath': cache.path,
         'shape': cache.shape
+        # store gt.files?
     }
 
     # Instantiate transformers
@@ -115,13 +116,14 @@ def prepare_cache(cache):
     sv_arr  = np.array(sv)
     usv_arr = np.array(usv)
 
-    for train_index, test_index in kf.split(gt):
+    for train_indexes, test_indexes in kf.split(gt):
+        i = len(folded_dataset['folds'])
         print('[{}/{}] Building dataset fold of size {}...'
-            .format(len(folded_dataset['folds']) + 1, N_FOLDS, train_index.size))
-        assert(train_index.size == test_index.size) # just making sure
-        gt_train, gt_test   = gt_arr[train_index],  gt_arr[test_index]
-        sv_train, sv_test   = sv_arr[train_index],  sv_arr[test_index]
-        usv_train, usv_test = usv_arr[train_index], usv_arr[test_index]
+            .format(i + 1, N_FOLDS, train_indexes.size))
+
+        gt_train, gt_test   = gt_arr[train_indexes],  gt_arr[test_indexes]
+        sv_train, sv_test   = sv_arr[train_indexes],  sv_arr[test_indexes]
+        usv_train, usv_test = usv_arr[train_indexes], usv_arr[test_indexes]
 
         ### TRAINING
         print('Building train data...')
@@ -158,7 +160,8 @@ def prepare_cache(cache):
 
         # Add to folded datasets
         fold = dict(data=(X_train, y_train, X_test, y_test),
-                    size=train_index.size)
+                    train_indexes=train_indexes,
+                    test_indexes=test_indexes)
         folded_dataset['folds'].append(fold)
 
     picklepath = join(cache.path, PICKLEFILE_PREPARED)

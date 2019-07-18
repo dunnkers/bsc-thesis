@@ -12,26 +12,24 @@ from tqdm.auto import tqdm
 from constants import CACHES, PICKLEFILE_PREPARED
 
 
-def test_fold(fold):
+def test_fold(fold, cache):
     _, _, X_test, y_test = fold['data']
     clf = fold['clf']
-    size = fold['size']
-    # cachepath = #fold['cachepath']
-    shape = (200, 100) #fold['shape']
+    test_size = fold['test_indexes'].size
     
     # Predict
     print('Predicting')
-    X_test_split = np.split(X_test, size) # only test one image for now.
+    X_test_split = np.split(X_test, test_size) # only test one image for now.
     predictions = clf.predict(X_test_split[0]) # ⚠️ Only start using terminal.
 
     # Accuracy score
     print('Computing accuracy')
-    y_test_split = np.split(y_test, size)
+    y_test_split = np.split(y_test, test_size)
     acc_score = accuracy_score(y_test_split[0], predictions)
     print('acc_score = {}'.format(acc_score))
 
     # Reconstruction
-    im = np.reshape(predictions, shape)
+    im = np.reshape(predictions, cache.shape)
     # imsave('duder.png', im, check_contrast=False)
     imshow(im)
     pyplot.show()
@@ -45,7 +43,7 @@ def test_cache(cache):
         # Test every fold
         for i, fold in enumerate(folded_dataset['folds']):
             print('[{}/{}] Testing fold...'.format(i + 1, n_splits))
-            test_fold(fold)
+            test_fold(fold, cache)
 
 
 test_cache(CACHES[0])
