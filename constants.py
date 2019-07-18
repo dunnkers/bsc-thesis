@@ -4,6 +4,11 @@ from collections import namedtuple
 DATA_PATH = './data'
 IMG_GLOB = '*.png'
 
+GT_FOLDERNAME  = 'groundtruth'
+SV_FOLDERNAME  = 'supervised'
+USV_FOLDERNAME = 'unsupervised/output'
+
+GT_IMG_GLOB   = join('groundtruth', IMG_GLOB)
 GT_DATA_GLOB  = join(DATA_PATH, 'groundtruth', IMG_GLOB)
 SV_DATA_GLOB  = join(DATA_PATH, 'supervised', IMG_GLOB)
 USV_DATA_GLOB = join(DATA_PATH, 'unsupervised/output', IMG_GLOB)

@@ -9,15 +9,29 @@ import numpy as np
 from tqdm.auto import tqdm
 import pickle
 from sklearn.model_selection import KFold
+from os.path import join, basename
+from re import findall
+from constants import CACHE, SV_FOLDERNAME, USV_FOLDERNAME
 
 print('GT_GLOB   =', const.GT_GLOB_ALL)
 print('SV_GLOB   =', const.SV_GLOB_ALL)
 print('USV_GLOB  =', const.USV_GLOB_ALL)
 print('CACHE     =', const.CACHE)
 
-gt  = imread_collection(const.GT_GLOB_ALL)
-sv  = imread_collection(const.SV_GLOB_ALL)
-usv = imread_collection(const.USV_GLOB_ALL)
+# Find first number in filename
+path_number = lambda path: findall('\d+', basename(path))[0]
+sv_imname  = lambda impath: 'image{}.png'.format(path_number(impath))
+usv_imname = lambda impath: 'output_image{}.png'.format(path_number(impath))
+sv_path  = lambda gt_path: join(CACHE.path, SV_FOLDERNAME, sv_imname(gt_path))
+usv_path = lambda gt_path: join(CACHE.path, USV_FOLDERNAME, usv_imname(gt_path))
+
+gt_glob = join(CACHE.path, const.GT_IMG_GLOB)
+gt  = imread_collection(gt_glob)
+sv_glob = [sv_path(path) for path in gt.files]
+usv_glob = [usv_path(path) for path in gt.files]
+
+sv  = imread_collection(sv_glob)
+usv = imread_collection(usv_glob)
 
 set_size = np.size(gt.files)
 
