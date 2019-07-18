@@ -8,15 +8,16 @@ from sklearn.preprocessing import FunctionTransformer
 import numpy as np
 from tqdm.auto import tqdm
 import pickle
+from sklearn.model_selection import KFold
 
-print('GT_GLOB   =', const.GT_GLOB)
-print('SV_GLOB   =', const.SV_GLOB)
-print('USV_GLOB  =', const.USV_GLOB)
+print('GT_GLOB   =', const.GT_GLOB_ALL)
+print('SV_GLOB   =', const.SV_GLOB_ALL)
+print('USV_GLOB  =', const.USV_GLOB_ALL)
 print('CACHE     =', const.CACHE)
 
-gt  = imread_collection(const.GT_GLOB)
-sv  = imread_collection(const.SV_GLOB)
-usv = imread_collection(const.USV_GLOB)
+gt  = imread_collection(const.GT_GLOB_ALL)
+sv  = imread_collection(const.SV_GLOB_ALL)
+usv = imread_collection(const.USV_GLOB_ALL)
 
 set_size = np.size(gt.files)
 
@@ -75,6 +76,10 @@ def select_ic(X):
     """ Select certain indices from  """
     data, samples = X
     return [vector[indexes] for vector, indexes in zip(data, samples)]
+
+# kf = KFold(n_splits=2)
+# for train_index, test_index in kf.split(gt):
+#     print("TRAIN:", train_index, "TEST:", test_index)
 
 # Vectorize
 vectorize = FunctionTransformer(ic2vecs, validate=False)
