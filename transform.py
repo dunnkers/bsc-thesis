@@ -14,40 +14,14 @@ from tqdm.auto import tqdm
 from sklearn.pipeline import Pipeline
 
 import constants as const
-from constants import (CACHE, IMG_GLOB,
+from constants import (IMG_GLOB, N_FOLDS,
                        GT_FOLDERNAME, GT_IMAGENAME, SV_FOLDERNAME,
                        SV_IMAGENAME, USV_FOLDERNAME, USV_IMAGENAME)
-
-print('CACHE =', const.CACHE)
-
-# Read ground truth images.
-gt_glob = join(CACHE.path, GT_FOLDERNAME, IMG_GLOB)
-gt = imread_collection(gt_glob)
-
-# Then, map sv/usv images for every gt image.
-sv_glob  = [path.replace(GT_FOLDERNAME, SV_FOLDERNAME)
-                .replace(GT_IMAGENAME, SV_IMAGENAME)  for path in gt.files]
-usv_glob = [path.replace(GT_FOLDERNAME, USV_FOLDERNAME)
-                .replace(GT_IMAGENAME, USV_IMAGENAME) for path in gt.files]
-
-# Read sv/usv
-sv  = imread_collection(sv_glob)
-usv = imread_collection(usv_glob)
-
-# Size
-assert(np.size(gt.files) == np.size(sv.files) == np.size(usv.files))
-
-# PLOT
-# from matplotlib import pyplot
-# from skimage.io import imshow
-# imshow(gt[0])
-# print(gt[0])
-# pyplot.show()
 
 # Idea: Could be replaced by StratifiedSampler?
 class SamplerTransformer(BaseEstimator, TransformerMixin):
     """ Sample size set to the class minority by default.
-        Can specify custom sample size. """
+        Can specify custom sample size. Balanced sampler. """
     def __init__(self, max_sample_size=None):
         self.max_sample_size = max_sample_size
 
@@ -94,104 +68,93 @@ def select_ic(X):
     data, samples = X
     return [vector[indexes] for vector, indexes in zip(data, samples)]
 
-# Split the set
-n_splits = 2
-kf = KFold(n_splits=n_splits)
-folded_dataset = {
-    'size': np.size(gt.files),
-    'folds': [],
-    'max_samples': const.MAX_SAMPLES,
-    'n_splits': n_splits,
-    'cachepath': CACHE.path,
-    'shape': CACHE.shape
-}
+def prepare_cache(cache):
+    # Read ground truth images.
+    gt_glob = join(cache.path, GT_FOLDERNAME, IMG_GLOB)
+    gt = imread_collection(gt_glob)
 
-vectorize = FunctionTransformer(ic2vecs, validate=False)
-sampler = SamplerTransformer(max_sample_size=const.MAX_SAMPLES)
-selector = FunctionTransformer(select_ic, validate=False)
+    # Then, map sv/usv images for every gt image.
+    sv_glob  = [path.replace(GT_FOLDERNAME, SV_FOLDERNAME)
+                    .replace(GT_IMAGENAME, SV_IMAGENAME)  for path in gt.files]
+    usv_glob = [path.replace(GT_FOLDERNAME, USV_FOLDERNAME)
+                    .replace(GT_IMAGENAME, USV_IMAGENAME) for path in gt.files]
 
-gt_arr  = np.array(gt)
-sv_arr  = np.array(sv)
-usv_arr = np.array(usv)
+    # Read sv/usv
+    sv  = imread_collection(sv_glob)
+    usv = imread_collection(usv_glob)
 
-for train_index, test_index in kf.split(gt):
-    print('[{}/{}] Building dataset fold of size {}...'
-        .format(len(folded_dataset['folds']) + 1, n_splits, train_index.size))
-    gt_train, gt_test   = gt_arr[train_index],  gt_arr[test_index]
-    sv_train, sv_test   = sv_arr[train_index],  sv_arr[test_index]
-    usv_train, usv_test = usv_arr[train_index], usv_arr[test_index]
+    # Size
+    assert(np.size(gt.files) == np.size(sv.files) == np.size(usv.files))
 
-    ### TRAINING
-    print('Building train data...')
-    # Vectorize
-    gt_train  = vectorize.fit_transform(gt_train)
-    sv_train  = vectorize.fit_transform(sv_train)
-    usv_train = vectorize.fit_transform(usv_train)
+    # Split the set
+    kf = KFold(n_splits=N_FOLDS)
+    folded_dataset = {
+        'size': np.size(gt.files),
+        'folds': [],
+        'max_samples': const.MAX_SAMPLES,
+        'n_splits': N_FOLDS,
+        'cachepath': cache.path,
+        'shape': cache.shape
+    }
 
-    # Sample
-    samples_train = sampler.fit_transform(gt_train) # sample w/ classes balanced.
+    vectorize = FunctionTransformer(ic2vecs, validate=False)
+    sampler = SamplerTransformer(max_sample_size=const.MAX_SAMPLES)
+    selector = FunctionTransformer(select_ic, validate=False)
 
-    # Select samples
-    gt_train  = selector.fit_transform((gt_train, samples_train))
-    sv_train  = selector.fit_transform((sv_train, samples_train))
-    usv_train = selector.fit_transform((usv_train, samples_train))
+    gt_arr  = np.array(gt)
+    sv_arr  = np.array(sv)
+    usv_arr = np.array(usv)
 
-    # Combine into 1D arrays
-    X_train = np.stack((np.hstack(sv_train), np.hstack(usv_train)), axis=-1)
-    y_train = np.hstack(gt_train)
+    for train_index, test_index in kf.split(gt):
+        print('[{}/{}] Building dataset fold of size {}...'
+            .format(len(folded_dataset['folds']) + 1, n_splits, train_index.size))
+        gt_train, gt_test   = gt_arr[train_index],  gt_arr[test_index]
+        sv_train, sv_test   = sv_arr[train_index],  sv_arr[test_index]
+        usv_train, usv_test = usv_arr[train_index], usv_arr[test_index]
 
-    ### TESTING
-    print('Building test data...')
-    # Vectorize
-    gt_test  = vectorize.transform(gt_test)
-    sv_test  = vectorize.transform(sv_test)
-    usv_test = vectorize.transform(usv_test)
+        ### TRAINING
+        print('Building train data...')
+        # Vectorize
+        gt_train  = vectorize.fit_transform(gt_train)
+        sv_train  = vectorize.fit_transform(sv_train)
+        usv_train = vectorize.fit_transform(usv_train)
 
-    # Combine into 1D arrays
-    X_test = np.stack((np.hstack(sv_test), np.hstack(usv_test)), axis=-1)
-    y_test = np.hstack(gt_test)
+        # Sample
+        samples_train = sampler.fit_transform(gt_train)
 
-    # Add to folded datasets    
-    fold = (X_train, y_train, X_test, y_test)
-    folded_dataset['folds'].append(fold)
+        # Select samples
+        gt_train  = selector.fit_transform((gt_train, samples_train))
+        sv_train  = selector.fit_transform((sv_train, samples_train))
+        usv_train = selector.fit_transform((usv_train, samples_train))
 
-picklepath = join(CACHE.path, '{}-fold.pickle'.format(n_splits))
-with open(picklepath, 'wb') as handle:
-    pickle.dump(folded_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        # Combine into 1D arrays
+        X_train = np.stack((np.hstack(sv_train), np.hstack(usv_train)), axis=-1)
+        y_train = np.hstack(gt_train)
 
+        ### TESTING
+        print('Building test data...')
+        # Vectorize
+        gt_test  = vectorize.transform(gt_test)
+        sv_test  = vectorize.transform(sv_test)
+        usv_test = vectorize.transform(usv_test)
 
-# transform_gt = Pipeline([
-#     ('vectorize', vectorize),
-#     ('sample', sampler)
-# ])
+        # Combine into 1D arrays
+        X_test = np.stack((np.hstack(sv_test), np.hstack(usv_test)), axis=-1)
+        y_test = np.hstack(gt_test)
 
-# split = kf.split(gt)
+        # Add to folded datasets    
+        fold = (X_train, y_train, X_test, y_test)
+        folded_dataset['folds'].append(fold)
 
-# # Vectorize
-# vectorize = FunctionTransformer(ic2vecs, validate=False)
-# gt  = vectorize.fit_transform(gt)  # replace because using `ravel`
-# sv  = vectorize.fit_transform(sv)  # replace because using `ravel`
-# usv = vectorize.fit_transform(usv) # replace because using `ravel`
+    picklepath = join(cache.path, '{}-fold.pickle'.format(n_splits))
+    with open(picklepath, 'wb') as handle:
+        pickle.dump(folded_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-# # Sample
-# sampler = SamplerTransformer(max_sample_size=const.SAMPLES)
-# samples = sampler.fit_transform(gt) # use gt to get sample; classes balanced.
+def prepare_all():
+    for i, cache in enumerate(const.CACHES):
+        print('[{}/{}] Preparing cache \'{}\'...'
+            .format(i + 1, len(const.CACHES), cache.path))
+        prepare_cache(cache)
 
-# # Select samples
-# selector = FunctionTransformer(select_ic, validate=False)
-# gt  = selector.fit_transform((gt, samples))
-# sv  = selector.fit_transform((sv, samples))
-# usv = selector.fit_transform((usv, samples))
-
-# # Combine into 1D arrays
-# print('Stacking arrays...')
-# X = np.stack((np.hstack(sv), np.hstack(usv)), axis=-1)
-# y = np.hstack(gt)
-# print('Arrays stacked.')
-
-# Save picklefile
-# picklepath = '{}_n={}.pickle'.format(const.CACHE.path, set_size)
-# with open(picklepath, 'wb') as handle:
-#     pickle.dump((X, y), handle, protocol=pickle.HIGHEST_PROTOCOL)
-
+prepare_all()
 print('Finished dataset preparation.')
