@@ -1,39 +1,41 @@
 #%%
-import constants as const
-from sklearn.base import BaseEstimator, TransformerMixin
+import pickle
+from os.path import basename, join
+from re import findall
+
+import numpy as np
 from skimage.io import imread_collection
 from skimage.util import img_as_bool
-from sklearn.utils import resample
-from sklearn.preprocessing import FunctionTransformer
-import numpy as np
-from tqdm.auto import tqdm
-import pickle
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.model_selection import KFold
-from os.path import join, basename
-from re import findall
-from constants import CACHE, SV_FOLDERNAME, USV_FOLDERNAME
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import resample
+from tqdm.auto import tqdm
+from sklearn.pipeline import Pipeline
 
-print('GT_GLOB   =', const.GT_GLOB_ALL)
-print('SV_GLOB   =', const.SV_GLOB_ALL)
-print('USV_GLOB  =', const.USV_GLOB_ALL)
-print('CACHE     =', const.CACHE)
+import constants as const
+from constants import (CACHE, IMG_GLOB,
+                       GT_FOLDERNAME, GT_IMAGENAME, SV_FOLDERNAME,
+                       SV_IMAGENAME, USV_FOLDERNAME, USV_IMAGENAME)
 
-# Find first number in filename
-path_number = lambda path: findall('\d+', basename(path))[0]
-sv_imname  = lambda impath: 'image{}.png'.format(path_number(impath))
-usv_imname = lambda impath: 'output_image{}.png'.format(path_number(impath))
-sv_path  = lambda gt_path: join(CACHE.path, SV_FOLDERNAME, sv_imname(gt_path))
-usv_path = lambda gt_path: join(CACHE.path, USV_FOLDERNAME, usv_imname(gt_path))
+print('CACHE =', const.CACHE)
 
-gt_glob = join(CACHE.path, const.GT_IMG_GLOB)
-gt  = imread_collection(gt_glob)
-sv_glob = [sv_path(path) for path in gt.files]
-usv_glob = [usv_path(path) for path in gt.files]
+# Read ground truth images.
+gt_glob = join(CACHE.path, GT_FOLDERNAME, IMG_GLOB)
+gt = imread_collection(gt_glob)
 
+# Then, map sv/usv images for every gt image.
+sv_glob  = [path.replace(GT_FOLDERNAME, SV_FOLDERNAME)
+                .replace(GT_IMAGENAME, SV_IMAGENAME)  for path in gt.files]
+usv_glob = [path.replace(GT_FOLDERNAME, USV_FOLDERNAME)
+                .replace(GT_IMAGENAME, USV_IMAGENAME) for path in gt.files]
+
+# Read sv/usv
 sv  = imread_collection(sv_glob)
 usv = imread_collection(usv_glob)
 
 set_size = np.size(gt.files)
+assert(set_size == np.size(sv.files) == np.size(usv.files))
 
 # PLOT
 # from matplotlib import pyplot
@@ -42,11 +44,12 @@ set_size = np.size(gt.files)
 # print(gt[0])
 # pyplot.show()
 
+# Idea: Could be replaced by StratifiedSampler?
 class SamplerTransformer(BaseEstimator, TransformerMixin):
     """ Sample size set to the class minority by default.
         Can specify custom sample size. """
-    def __init__(self, sample_size=None):
-        self.sample_size = sample_size
+    def __init__(self, max_sample_size=None):
+        self.max_sample_size = max_sample_size
 
     def fit(self, X, y = None):
         return self
@@ -65,10 +68,10 @@ class SamplerTransformer(BaseEstimator, TransformerMixin):
         # split vector by its classes
         splitted = [np.where(vector == classname)[0] for classname in classes]
 
-        # resample. balance equally, to sample_size or to minority size.
+        # resample. balance equally, to max_sample_size or to minority size.
         # > note: resample with stratify is sklearn >= v0.21.2
         minority = np.argmin(counts)
-        n_samples = self.sample_size or counts[minority]
+        n_samples = self.max_sample_size or counts[minority]
         resampled = [resample(split, n_samples=n_samples, random_state=41)
                 for split in splitted]
 
@@ -91,9 +94,10 @@ def select_ic(X):
     data, samples = X
     return [vector[indexes] for vector, indexes in zip(data, samples)]
 
-# kf = KFold(n_splits=2)
-# for train_index, test_index in kf.split(gt):
-#     print("TRAIN:", train_index, "TEST:", test_index)
+# Split the set
+kf = KFold(n_splits=2)
+for train_index, test_index in kf.split(gt):
+    print("TRAIN:", train_index, "TEST:", test_index)
 
 # Vectorize
 vectorize = FunctionTransformer(ic2vecs, validate=False)
@@ -102,7 +106,7 @@ sv  = vectorize.fit_transform(sv)  # replace because using `ravel`
 usv = vectorize.fit_transform(usv) # replace because using `ravel`
 
 # Sample
-sampler = SamplerTransformer(sample_size=const.SAMPLES)
+sampler = SamplerTransformer(max_sample_size=const.SAMPLES)
 samples = sampler.fit_transform(gt) # use gt to get sample; classes balanced.
 
 # Select samples

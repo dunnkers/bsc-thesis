@@ -5,7 +5,7 @@ from skimage.io import imread_collection, imsave
 from skimage.transform import resize
 from skimage.exposure import rescale_intensity
 from skimage.color import rgb2gray
-from skimage.util import img_as_bool, img_as_uint
+from skimage.util import img_as_bool, img_as_ubyte
 from os import makedirs
 from tqdm.auto import tqdm
 from warnings import catch_warnings, simplefilter
@@ -14,9 +14,6 @@ print('GT_DATA_GLOB   =', const.GT_DATA_GLOB)
 print('SV_DATA_GLOB   =', const.SV_DATA_GLOB)
 print('USV_DATA_GLOB  =', const.USV_DATA_GLOB)
 print('CACHES    =', const.CACHES)
-
-def gt_transform(im):
-    return img_as_uint(img_as_bool(im))
 
 def cache_image(im, path, shape, transform=None):
     """
@@ -55,7 +52,7 @@ def cache_collection(ic, cache, transform=None, desc='Caching'):
     ic (ImageCollection): The image collection to write cache for.
     cache (namedtuple): Cache to write to. Namedtuple of (cachepath, shape).
     """
-    for idx, impath in enumerate(tqdm(ic.files, desc=desc, unit='img')):
+    for idx, impath in enumerate(tqdm(ic.files, desc=desc, unit='imgs')):
         impath_cached = get_impath_cached(impath, cache.path)
 
         if not exists(impath_cached):
@@ -67,11 +64,14 @@ def cache_all():
     usv = imread_collection(const.USV_DATA_GLOB)
     for i, cache in enumerate(const.CACHES):
         print('[{}/{}] Writing cache to \'{}\'...'
-            .format(i, len(const.CACHES), cache.path))
+            .format(i + 1, len(const.CACHES), cache.path))
         cache_collection(gt, cache,  desc='Caching  groundtruth',
             transform=gt_transform)
         cache_collection(sv, cache,  desc='Caching   supervised')
         cache_collection(usv, cache, desc='Caching unsupervised')
+
+def gt_transform(im):
+    return img_as_ubyte(img_as_bool(im))
 
 cache_all()
 print('Finished caching.')
