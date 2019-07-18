@@ -26,5 +26,5 @@ CACHES = [
 ### Current configuration
 # CACHE = CACHES[0] # Cache to use.
 MAX_SAMPLES = 100
-N_FOLDS = 2
+N_FOLDS = 5
 PICKLEFILE_PREPARED = '{}-fold.pickle'.format(N_FOLDS)
