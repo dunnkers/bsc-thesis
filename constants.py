@@ -22,8 +22,7 @@ CACHES = [
     Cache('./cache_100x200', (200, 100)),
     Cache('./cache_140x280', (280, 140))
 ]
-# GT_CACHE_GLOB = lambda cache_path: join(cache_path, 'groundtruth', IMG_GLOB)
 
 ### Current configuration
 CACHE = CACHES[0] # Cache to use.
-SAMPLES = 100
+MAX_SAMPLES = 100
