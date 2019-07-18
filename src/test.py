@@ -11,8 +11,7 @@ from tqdm.auto import tqdm
 
 from constants import CACHES, PICKLEFILE_PREPARED
 
-
-def test_fold(fold, cache):
+def test_fold(fold, cache,i):
     _, _, X_test, y_test = fold['data']
     clf = fold['clf']
     test_size = fold['test_indexes'].size
@@ -30,7 +29,8 @@ def test_fold(fold, cache):
 
     # Reconstruction
     im = np.reshape(predictions, cache.shape)
-    # imsave('duder.png', im, check_contrast=False)
+    output_impath = join(cache.path, 'output{}.png'.format(i))
+    imsave(output_impath, im, check_contrast=False)
     imshow(im)
     pyplot.show()
 
@@ -43,8 +43,13 @@ def test_cache(cache):
         # Test every fold
         for i, fold in enumerate(folded_dataset['folds']):
             print('[{}/{}] Testing fold...'.format(i + 1, n_splits))
-            test_fold(fold, cache)
+            test_fold(fold, cache,i)
 
+def test_all():
+    for i, cache in enumerate(CACHES):
+        print('[{}/{}] Testing cache \'{}\'...'
+            .format(i + 1, len(CACHES), cache.path))
+        test_cache(cache)
 
-test_cache(CACHES[0])
+test_all()
 print('Finished testing.')

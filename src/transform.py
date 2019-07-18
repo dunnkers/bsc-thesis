@@ -95,15 +95,12 @@ def prepare_cache(cache):
     assert(np.size(gt.files) == np.size(sv.files) == np.size(usv.files))
 
     # Split the set
-    kf = KFold(n_splits=N_FOLDS)
+    kf = KFold(n_splits=N_FOLDS, shuffle=True, random_state=8)
     folded_dataset = { # @IDEA use a Dataset class for this.
-        'size': np.size(gt.files),
         'folds': [],
         'max_samples': MAX_SAMPLES,
         'n_splits': N_FOLDS,
-        'cachepath': cache.path,
-        'shape': cache.shape
-        # store gt.files?
+        'gt_files': gt.files
     }
 
     # Instantiate transformers
