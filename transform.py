@@ -107,7 +107,7 @@ def prepare_cache(cache):
 
     for train_index, test_index in kf.split(gt):
         print('[{}/{}] Building dataset fold of size {}...'
-            .format(len(folded_dataset['folds']) + 1, n_splits, train_index.size))
+            .format(len(folded_dataset['folds']) + 1, N_FOLDS, train_index.size))
         gt_train, gt_test   = gt_arr[train_index],  gt_arr[test_index]
         sv_train, sv_test   = sv_arr[train_index],  sv_arr[test_index]
         usv_train, usv_test = usv_arr[train_index], usv_arr[test_index]
@@ -146,7 +146,7 @@ def prepare_cache(cache):
         fold = (X_train, y_train, X_test, y_test)
         folded_dataset['folds'].append(fold)
 
-    picklepath = join(cache.path, '{}-fold.pickle'.format(n_splits))
+    picklepath = join(cache.path, '{}-fold.pickle'.format(N_FOLDS))
     with open(picklepath, 'wb') as handle:
         pickle.dump(folded_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
