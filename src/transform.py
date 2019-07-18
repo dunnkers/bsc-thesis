@@ -70,6 +70,9 @@ def select_ic(X):
     data, samples = X
     return [vector[indexes] for vector, indexes in zip(data, samples)]
 
+# def prepare_fold(fold):
+#   pass
+
 def prepare_cache(cache):
     """ Prepare images in cache folder. Transforms 2D image arrays into flat
     arrays, samples the images using balanced classes, and combines supervised-
@@ -115,6 +118,7 @@ def prepare_cache(cache):
     for train_index, test_index in kf.split(gt):
         print('[{}/{}] Building dataset fold of size {}...'
             .format(len(folded_dataset['folds']) + 1, N_FOLDS, train_index.size))
+        assert(train_index.size == test_index.size) # just making sure
         gt_train, gt_test   = gt_arr[train_index],  gt_arr[test_index]
         sv_train, sv_test   = sv_arr[train_index],  sv_arr[test_index]
         usv_train, usv_test = usv_arr[train_index], usv_arr[test_index]
@@ -152,8 +156,9 @@ def prepare_cache(cache):
         X_test = np.stack((np.hstack(sv_test), np.hstack(usv_test)), axis=-1)
         y_test = np.hstack(gt_test)
 
-        # Add to folded datasets    
-        fold = (X_train, y_train, X_test, y_test)
+        # Add to folded datasets
+        fold = dict(data=(X_train, y_train, X_test, y_test),
+                    size=train_index.size)
         folded_dataset['folds'].append(fold)
 
     picklepath = join(cache.path, PICKLEFILE_PREPARED)
