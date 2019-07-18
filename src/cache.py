@@ -1,19 +1,22 @@
 #%%
-import constants as const
-from os.path import exists, dirname
-from skimage.io import imread_collection, imsave
-from skimage.transform import resize
-from skimage.exposure import rescale_intensity
-from skimage.color import rgb2gray
-from skimage.util import img_as_bool, img_as_ubyte
 from os import makedirs
-from tqdm.auto import tqdm
+from os.path import dirname, exists
 from warnings import catch_warnings, simplefilter
 
-print('GT_DATA_GLOB   =', const.GT_DATA_GLOB)
-print('SV_DATA_GLOB   =', const.SV_DATA_GLOB)
-print('USV_DATA_GLOB  =', const.USV_DATA_GLOB)
-print('CACHES    =', const.CACHES)
+from skimage.color import rgb2gray
+from skimage.exposure import rescale_intensity
+from skimage.io import imread_collection, imsave
+from skimage.transform import resize
+from skimage.util import img_as_bool, img_as_ubyte
+from tqdm.auto import tqdm
+
+from constants import (CACHES, DATA_PATH, GT_DATA_GLOB, SV_DATA_GLOB,
+                       USV_DATA_GLOB)
+
+print('GT_DATA_GLOB   =', GT_DATA_GLOB)
+print('SV_DATA_GLOB   =', SV_DATA_GLOB)
+print('USV_DATA_GLOB  =', USV_DATA_GLOB)
+print('CACHES    =', CACHES)
 
 def cache_image(im, path, shape, transform=None):
     """
@@ -41,7 +44,7 @@ def cache_image(im, path, shape, transform=None):
         imsave(path, im, check_contrast=False) # check_contrast is skimage>=0.16
 
 def get_impath_cached(impath, cachepath):
-    return impath.replace(const.DATA_PATH, cachepath, 1)
+    return impath.replace(DATA_PATH, cachepath, 1)
 
 def cache_collection(ic, cache, transform=None, desc='Caching'):
     """
@@ -59,12 +62,13 @@ def cache_collection(ic, cache, transform=None, desc='Caching'):
             cache_image(ic[idx], impath_cached, cache.shape, transform=transform)
 
 def cache_all():
-    gt  = imread_collection(const.GT_DATA_GLOB)
-    sv  = imread_collection(const.SV_DATA_GLOB)
-    usv = imread_collection(const.USV_DATA_GLOB)
-    for i, cache in enumerate(const.CACHES):
+    gt  = imread_collection(GT_DATA_GLOB)
+    sv  = imread_collection(SV_DATA_GLOB)
+    usv = imread_collection(USV_DATA_GLOB)
+
+    for i, cache in enumerate(CACHES):
         print('[{}/{}] Writing cache to \'{}\'...'
-            .format(i + 1, len(const.CACHES), cache.path))
+            .format(i + 1, len(CACHES), cache.path))
         cache_collection(gt, cache,  desc='Caching  groundtruth',
             transform=gt_transform)
         cache_collection(sv, cache,  desc='Caching   supervised')

@@ -8,17 +8,19 @@ from skimage.io import imread_collection
 from skimage.util import img_as_bool
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.model_selection import KFold
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import resample
 from tqdm.auto import tqdm
-from sklearn.pipeline import Pipeline
 
-import constants as const
-from constants import (IMG_GLOB, N_FOLDS,
-                       GT_FOLDERNAME, GT_IMAGENAME, SV_FOLDERNAME,
-                       SV_IMAGENAME, USV_FOLDERNAME, USV_IMAGENAME)
+from constants import (CACHES, GT_FOLDERNAME, GT_IMAGENAME, IMG_GLOB,
+                       MAX_SAMPLES, N_FOLDS, PICKLEFILE_PREPARED,
+                       SV_FOLDERNAME, SV_IMAGENAME, USV_FOLDERNAME,
+                       USV_IMAGENAME)
 
-# Idea: Could be replaced by StratifiedSampler?
+print('N_FOLDS =', N_FOLDS)
+
+# @IDEA: Find out where Sampler(stratified=True) and Stratified k-fold comes in.
 class SamplerTransformer(BaseEstimator, TransformerMixin):
     """ Sample size set to the class minority by default.
         Can specify custom sample size. Balanced sampler. """
@@ -64,11 +66,14 @@ def ic2vecs(ic):
     return [im2vec(im) for im in tqdm(ic, desc='Vectorizing')]
 
 def select_ic(X):
-    """ Select certain indices from  """
+    """ Map each image in collection to select the given indices. """
     data, samples = X
     return [vector[indexes] for vector, indexes in zip(data, samples)]
 
 def prepare_cache(cache):
+    """ Prepare images in cache folder. Transforms 2D image arrays into flat
+    arrays, samples the images using balanced classes, and combines supervised-
+    and unsupervised approaches into a 2-feature vector. """
     # Read ground truth images.
     gt_glob = join(cache.path, GT_FOLDERNAME, IMG_GLOB)
     gt = imread_collection(gt_glob)
@@ -88,19 +93,21 @@ def prepare_cache(cache):
 
     # Split the set
     kf = KFold(n_splits=N_FOLDS)
-    folded_dataset = {
+    folded_dataset = { # @IDEA use a Dataset class for this.
         'size': np.size(gt.files),
         'folds': [],
-        'max_samples': const.MAX_SAMPLES,
+        'max_samples': MAX_SAMPLES,
         'n_splits': N_FOLDS,
         'cachepath': cache.path,
         'shape': cache.shape
     }
 
+    # Instantiate transformers
     vectorize = FunctionTransformer(ic2vecs, validate=False)
-    sampler = SamplerTransformer(max_sample_size=const.MAX_SAMPLES)
+    sampler = SamplerTransformer(max_sample_size=MAX_SAMPLES)
     selector = FunctionTransformer(select_ic, validate=False)
 
+    # Convert image collections to array
     gt_arr  = np.array(gt)
     sv_arr  = np.array(sv)
     usv_arr = np.array(usv)
@@ -114,6 +121,7 @@ def prepare_cache(cache):
 
         ### TRAINING
         print('Building train data...')
+
         # Vectorize
         gt_train  = vectorize.fit_transform(gt_train)
         sv_train  = vectorize.fit_transform(sv_train)
@@ -131,8 +139,10 @@ def prepare_cache(cache):
         X_train = np.stack((np.hstack(sv_train), np.hstack(usv_train)), axis=-1)
         y_train = np.hstack(gt_train)
 
+
         ### TESTING
         print('Building test data...')
+
         # Vectorize
         gt_test  = vectorize.transform(gt_test)
         sv_test  = vectorize.transform(sv_test)
@@ -146,14 +156,14 @@ def prepare_cache(cache):
         fold = (X_train, y_train, X_test, y_test)
         folded_dataset['folds'].append(fold)
 
-    picklepath = join(cache.path, '{}-fold.pickle'.format(N_FOLDS))
+    picklepath = join(cache.path, PICKLEFILE_PREPARED)
     with open(picklepath, 'wb') as handle:
         pickle.dump(folded_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 def prepare_all():
-    for i, cache in enumerate(const.CACHES):
+    for i, cache in enumerate(CACHES):
         print('[{}/{}] Preparing cache \'{}\'...'
-            .format(i + 1, len(const.CACHES), cache.path))
+            .format(i + 1, len(CACHES), cache.path))
         prepare_cache(cache)
 
 prepare_all()
