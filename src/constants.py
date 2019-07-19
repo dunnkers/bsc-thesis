@@ -22,9 +22,9 @@ USV_DATA_GLOB = join(DATA_PATH, USV_FOLDERNAME, IMG_GLOB)
 Cache = namedtuple('Cache', ['path', 'shape'])
 CACHES = [
     Cache('./cache_35x70',      (70, 35)),      # 1/20 downscale
-    Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
+    # Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
     # Cache('./cache_70x140',   (140, 70)),     # 1/10 downscale
-    Cache('./cache_100x200',  (200, 100)),    # 1/7. downscale
+    # Cache('./cache_100x200',  (200, 100)),    # 1/7. downscale
     # Cache('./cache_140x280',  (280, 140)),    # 1/5. downscale
     # Cache('./cache_175x350',  (350, 175)),    # 1/4. downscale
     # Cache('./cache_350x700',  (700, 350))     # 1/2. downscale
@@ -35,3 +35,6 @@ MAX_SAMPLES = 100
 N_FOLDS = 5
 PICKLEFILE_PREPARED = '{}-fold.pickle'.format(N_FOLDS)
 CACHE_DATA_TYPE = uint8
+N_JOBS = -1
+""" When n_jobs is -1, you can't start the program via the vscode integrated 
+terminal. See: https://github.com/microsoft/ptvsd/issues/943 """

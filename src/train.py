@@ -6,7 +6,7 @@ from time import time
 from sklearn.ensemble import BaggingClassifier
 from sklearn.svm import SVC
 
-from constants import CACHES, PICKLEFILE_PREPARED
+from constants import CACHES, N_JOBS, PICKLEFILE_PREPARED
 
 
 def train_fold(fold):
@@ -22,8 +22,7 @@ def train_fold(fold):
     clf = BaggingClassifier(model,
         max_samples=1.0 / n_estimators,
         n_estimators=n_estimators,
-        # can't start using vscode terminal; https://github.com/microsoft/ptvsd/issues/943
-        n_jobs=-1)
+        n_jobs=N_JOBS)
     clf.fit(X_train, y_train)
     # SGD
 

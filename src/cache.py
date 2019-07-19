@@ -4,6 +4,7 @@ from os.path import dirname, exists
 from time import time
 from warnings import catch_warnings, simplefilter
 
+from joblib import Parallel, delayed
 from numpy import uint8
 from skimage.color import rgb2gray
 from skimage.exposure import rescale_intensity
@@ -12,10 +13,9 @@ from skimage.io import imread_collection, imsave
 from skimage.transform import resize
 from skimage.util import img_as_bool, img_as_ubyte
 from tqdm.auto import tqdm
-from joblib import Parallel, delayed
 
 from constants import (CACHE_DATA_TYPE, CACHES, DATA_PATH, GT_DATA_GLOB,
-                       SV_DATA_GLOB, USV_DATA_GLOB)
+                       N_JOBS, SV_DATA_GLOB, USV_DATA_GLOB)
 
 print('GT_DATA_GLOB   =', GT_DATA_GLOB)
 print('SV_DATA_GLOB   =', SV_DATA_GLOB)
@@ -64,13 +64,13 @@ def cache_collection(ic, cache, transform=None, desc='Caching'):
     cache_impath = lambda impath: impath.replace(DATA_PATH, cache.path, 1)
     should_cache = lambda impath: not exists(impath)
 
+    # Map image filenames to their cache path
     files = map(cache_impath, ic.files)
     files = filter(should_cache, files)
     files = list(files)
     
     # Parallelized caching
-    # can't start using vscode terminal; https://github.com/microsoft/ptvsd/issues/943
-    Parallel(n_jobs=-1)(
+    Parallel(n_jobs=N_JOBS)(
         # wrap cache_image() with `delayed`
         delayed(cache_image)(ic[idx], impath, cache.shape, transform=transform)
         for idx, impath in enumerate(tqdm(files, desc=desc, unit='imgs'))
