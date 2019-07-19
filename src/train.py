@@ -28,7 +28,7 @@ def train_fold(fold):
 
     # Print time
     end = time()
-    print('{0} trained in {1:.4f} sec'.format(modelname, end - start))
+    print(' {} trained in {:.2f} sec'.format(modelname, end - start))
 
     # Store classifier in fold.
     fold['clf'] = clf
@@ -45,7 +45,7 @@ def train_cache(cache):
 
         # Train every fold
         for i, fold in enumerate(folded_dataset['folds']):
-            print('[{}/{}] Training fold using {} train- and {} test samples...'
+            print('[{}/{}] Training fold using {} train- and {} test images...'
                 .format(i + 1, n_splits, fold['train_indexes'].size,
                                         fold['test_indexes'].size))
             trained_fold = train_fold(fold)
@@ -63,5 +63,7 @@ def train_all():
             .format(i + 1, len(CACHES), cache.path))
         train_cache(cache)
 
+start = time()
 train_all()
-print('Finished training.')
+end = time()
+print('Finished training in {:.2f} sec'.format(end - start))

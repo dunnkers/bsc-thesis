@@ -1,6 +1,7 @@
 #%%
 from os import makedirs
 from os.path import dirname, exists
+from time import time
 from warnings import catch_warnings, simplefilter
 
 from numpy import uint8
@@ -88,5 +89,7 @@ def cache_all():
 def gt_transform(im):
     return img_as_ubyte(im > threshold_yen(im))
 
+start = time()
 cache_all()
-print('Finished caching.')
+end = time()
+print('Finished caching in {:.2f} sec'.format(end - start))

@@ -1,7 +1,7 @@
 #%%
 import pickle
 from os import makedirs
-from os.path import dirname, exists, join
+from os.path import dirname, exists, join, basename
 from time import time
 from warnings import catch_warnings, simplefilter
 
@@ -31,34 +31,37 @@ def test_fold(fold, cache, gt_files):
     y_test_images = np.split(y_test, test_size)
     assert(X_test.shape[0] == y_test.shape[0])
 
+    fold_accuracies = []
     for i, X_test_img in enumerate(X_test_images):
-        w, h = cache.shape
-        print('[{}/{}] Predicting {}x{} image...'
-            .format(i + 1, test_size, w, h), end='\t')
+        impath_gt = gt_files[test_indexes[i]]
+        print('  [{}/{}] Predicting {}...'
+            .format(i + 1, test_size, basename(impath_gt)), end='\t')
         start = time()
         predictions = clf.predict(X_test_img) # ⚠️ Only start using terminal.
-        # predictions = np.zeros(np.prod(cache.shape))
+        # predictions = np.zeros(np.prod(cache.shape)) # 🧪 For mock runs
 
         # Accuracy score
-        acc_score = accuracy_score(y_test_images[i], predictions)
+        accuracy = accuracy_score(y_test_images[i], predictions)
         end = time()
         print('predicted in {0:.2f} sec; accuracy = {1:.2f}%'
-            .format(end - start, acc_score * 100))
+            .format(end - start, accuracy * 100))
+        fold_accuracies.append(accuracy)
 
         # Reconstruction
-        impath_gt  = gt_files[test_indexes[i]]
-        impath_out = impath_gt.replace(GT_FOLDERNAME, OUT_FOLDERNAME)
-        makeDirIfNotExists(impath_out)
         im = np.reshape(predictions, cache.shape)
 
         # Save
-        # imshow(im)
-        # pyplot.show()
+        impath_out = impath_gt.replace(GT_FOLDERNAME, OUT_FOLDERNAME)
+        makeDirIfNotExists(impath_out)
         with catch_warnings(): # prevent contrast warnings.
             simplefilter("ignore")
             imsave(impath_out, im, check_contrast=False)
 
-        break # 🛑 only test one image for now.
+        if i >= 5:
+            break # 🛑 only test one image for now.
+    
+    print(' Fold accuracy: {:.2f}%'
+        .format(np.array(fold_accuracies).mean() * 100))
 
 def test_cache(cache):
     picklepath = join(cache.path, PICKLEFILE_PREPARED)
@@ -78,5 +81,7 @@ def test_all():
             .format(i + 1, len(CACHES), cache.path))
         test_cache(cache)
 
+start = time()
 test_all()
-print('Finished testing.')
+end = time()
+print('Finished testing in {:.2f} sec'.format(end - start))
