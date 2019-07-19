@@ -1,5 +1,6 @@
 from os.path import join
 from collections import namedtuple
+from numpy import uint8
 
 DATA_PATH = './data'
 IMG_GLOB = '*.png'
@@ -24,7 +25,7 @@ CACHES = [
     # Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
     # Cache('./cache_70x140',   (140, 70)),     # 1/10 downscale
     Cache('./cache_100x200',  (200, 100)),    # 1/7. downscale
-    Cache('./cache_140x280',  (280, 140)),    # 1/5. downscale
+    # Cache('./cache_140x280',  (280, 140)),    # 1/5. downscale
     # Cache('./cache_175x350',  (350, 175)),    # 1/4. downscale
     # Cache('./cache_350x700',  (700, 350))     # 1/2. downscale
 ]
@@ -34,3 +35,4 @@ CACHES = [
 MAX_SAMPLES = 100
 N_FOLDS = 5
 PICKLEFILE_PREPARED = '{}-fold.pickle'.format(N_FOLDS)
+CACHE_DATA_TYPE = uint8

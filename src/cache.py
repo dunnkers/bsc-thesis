@@ -3,6 +3,7 @@ from os import makedirs
 from os.path import dirname, exists
 from warnings import catch_warnings, simplefilter
 
+from numpy import uint8
 from skimage.color import rgb2gray
 from skimage.exposure import rescale_intensity
 from skimage.filters import threshold_yen
@@ -11,8 +12,8 @@ from skimage.transform import resize
 from skimage.util import img_as_bool, img_as_ubyte
 from tqdm.auto import tqdm
 
-from constants import (CACHES, DATA_PATH, GT_DATA_GLOB, SV_DATA_GLOB,
-                       USV_DATA_GLOB)
+from constants import (CACHE_DATA_TYPE, CACHES, DATA_PATH, GT_DATA_GLOB,
+                       SV_DATA_GLOB, USV_DATA_GLOB)
 
 print('GT_DATA_GLOB   =', GT_DATA_GLOB)
 print('SV_DATA_GLOB   =', SV_DATA_GLOB)
@@ -40,6 +41,11 @@ def cache_image(im, path, shape, transform=None):
         im = rgb2gray(im)
         if transform:
             im = transform(im)
+
+        # verify data format
+        assert(CACHE_DATA_TYPE == uint8) # only support ubyte convert.
+        if not im.dtype == CACHE_DATA_TYPE:
+            im = img_as_ubyte(im)
 
         # Supressed:
         # Possible sign loss when converting negative image of type float64 to positive image of type bool.
