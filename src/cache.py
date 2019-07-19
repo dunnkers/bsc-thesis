@@ -52,9 +52,6 @@ def cache_image(im, path, shape, transform=None):
         # save
         imsave(path, im, check_contrast=False) # check_contrast is skimage>=0.16
 
-def get_impath_cached(impath, cachepath):
-    return impath.replace(DATA_PATH, cachepath, 1)
-
 def cache_collection(ic, cache, transform=None, desc='Caching'):
     """
     Checks for every image in this collection whether it is
@@ -64,15 +61,19 @@ def cache_collection(ic, cache, transform=None, desc='Caching'):
     ic (ImageCollection): The image collection to write cache for.
     cache (namedtuple): Cache to write to. Namedtuple of (cachepath, shape).
     """
-    def do_cache_image(idx, impath):
-        impath_cached = get_impath_cached(impath, cache.path)
+    cache_impath = lambda impath: impath.replace(DATA_PATH, cache.path, 1)
+    should_cache = lambda impath: not exists(impath)
 
-        if not exists(impath_cached):
-            cache_image(ic[idx], impath_cached, cache.shape, transform=transform)
-
+    files = map(cache_impath, ic.files)
+    files = filter(should_cache, files)
+    files = list(files)
+    
+    # Parallelized caching
+    # can't start using vscode terminal; https://github.com/microsoft/ptvsd/issues/943
     Parallel(n_jobs=-1)(
-        delayed(do_cache_image)(idx, impath)
-        for idx, impath in enumerate(tqdm(ic.files, desc=desc, unit='imgs'))
+        # wrap cache_image() with `delayed`
+        delayed(cache_image)(ic[idx], impath, cache.shape, transform=transform)
+        for idx, impath in enumerate(tqdm(files, desc=desc, unit='imgs'))
     )
 
 def cache_all():
