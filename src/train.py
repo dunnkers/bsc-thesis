@@ -25,6 +25,7 @@ def train_fold(fold):
         # can't start using vscode terminal; https://github.com/microsoft/ptvsd/issues/943
         n_jobs=-1)
     clf.fit(X_train, y_train)
+    # SGD
 
     # Print time
     end = time()

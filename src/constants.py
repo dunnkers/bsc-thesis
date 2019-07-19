@@ -21,8 +21,8 @@ USV_DATA_GLOB = join(DATA_PATH, USV_FOLDERNAME, IMG_GLOB)
 # Caches to save.
 Cache = namedtuple('Cache', ['path', 'shape'])
 CACHES = [
-    # Cache('./cache_35x70',      (70, 35)),      # 1/20 downscale
-    # Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
+    Cache('./cache_35x70',      (70, 35)),      # 1/20 downscale
+    Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
     # Cache('./cache_70x140',   (140, 70)),     # 1/10 downscale
     Cache('./cache_100x200',  (200, 100)),    # 1/7. downscale
     # Cache('./cache_140x280',  (280, 140)),    # 1/5. downscale
@@ -31,7 +31,6 @@ CACHES = [
 ]
 
 ### Current configuration
-# CACHE = CACHES[0] # Cache to use.
 MAX_SAMPLES = 100
 N_FOLDS = 5
 PICKLEFILE_PREPARED = '{}-fold.pickle'.format(N_FOLDS)

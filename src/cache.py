@@ -12,6 +12,7 @@ from skimage.io import imread_collection, imsave
 from skimage.transform import resize
 from skimage.util import img_as_bool, img_as_ubyte
 from tqdm.auto import tqdm
+from joblib import Parallel, delayed
 
 from constants import (CACHE_DATA_TYPE, CACHES, DATA_PATH, GT_DATA_GLOB,
                        SV_DATA_GLOB, USV_DATA_GLOB)
@@ -48,10 +49,6 @@ def cache_image(im, path, shape, transform=None):
         if not im.dtype == CACHE_DATA_TYPE:
             im = img_as_ubyte(im)
 
-        # Supressed:
-        # Possible sign loss when converting negative image of type float64 to positive image of type bool.
-        # Possible precision loss when converting from float64 to bool
-
         # save
         imsave(path, im, check_contrast=False) # check_contrast is skimage>=0.16
 
@@ -67,11 +64,16 @@ def cache_collection(ic, cache, transform=None, desc='Caching'):
     ic (ImageCollection): The image collection to write cache for.
     cache (namedtuple): Cache to write to. Namedtuple of (cachepath, shape).
     """
-    for idx, impath in enumerate(tqdm(ic.files, desc=desc, unit='imgs')):
+    def do_cache_image(idx, impath):
         impath_cached = get_impath_cached(impath, cache.path)
 
         if not exists(impath_cached):
             cache_image(ic[idx], impath_cached, cache.shape, transform=transform)
+
+    Parallel(n_jobs=-1)(
+        delayed(do_cache_image)(idx, impath)
+        for idx, impath in enumerate(tqdm(ic.files, desc=desc, unit='imgs'))
+    )
 
 def cache_all():
     gt  = imread_collection(GT_DATA_GLOB)
