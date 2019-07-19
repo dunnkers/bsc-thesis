@@ -40,6 +40,10 @@ def cache_image(im, path, shape, transform=None):
         if transform:
             im = transform(im)
 
+        # Supressed:
+        # Possible sign loss when converting negative image of type float64 to positive image of type bool.
+        # Possible precision loss when converting from float64 to bool
+
         # save
         imsave(path, im, check_contrast=False) # check_contrast is skimage>=0.16
 
