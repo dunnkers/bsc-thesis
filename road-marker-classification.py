@@ -57,12 +57,12 @@ start = time.time()
 logger.info('Image loading')
 
 
-data_folder = './data_100x200'
+data_folder = './cache_100x200'
 gt_folder = '{}/groundtruth/'.format(data_folder)
 sv_folder = '{}/supervised/'.format(data_folder)
 usv_prefix = '{}/unsupervised/output/output_'.format(data_folder)
 ## Training
-train_glob = 'image???.png'
+train_glob = 'image??.png'
 # Ground truth
 gt = imread_collection('{}{}'.format(gt_folder, train_glob))
 # Supervised
@@ -76,7 +76,7 @@ logger.info('gt:\t\t{}\tsv: {}\tusv: {}'.format(
 assert(np.size(gt.files) == np.size(sv.files) == np.size(usv.files))
 
 ## Testing
-test_glob = 'image??.png'
+test_glob = 'image?.png'
 # Ground truth
 gt_test = imread_collection('{}{}'.format(gt_folder, test_glob))
 # Supervised

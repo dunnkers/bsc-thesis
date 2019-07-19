@@ -5,6 +5,7 @@ from warnings import catch_warnings, simplefilter
 
 from skimage.color import rgb2gray
 from skimage.exposure import rescale_intensity
+from skimage.filters import threshold_yen
 from skimage.io import imread_collection, imsave
 from skimage.transform import resize
 from skimage.util import img_as_bool, img_as_ubyte
@@ -79,7 +80,7 @@ def cache_all():
         cache_collection(usv, cache, desc='Caching unsupervised')
 
 def gt_transform(im):
-    return img_as_ubyte(img_as_bool(im))
+    return img_as_ubyte(im > threshold_yen(im))
 
 cache_all()
 print('Finished caching.')
