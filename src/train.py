@@ -10,16 +10,11 @@ from constants import CACHES, PICKLEFILE_PREPARED
 
 
 def train_fold(fold):
-    X_train, y_train, X_test, y_test = fold['data']
-    print('X_train.shape', X_train.shape)
-    print('y_train.shape', y_train.shape)
-    print('X_test.shape', X_test.shape)
-    print('y_test.shape', y_test.shape)
+    X_train, y_train, _, _ = fold['data']
 
     # Select model
     start = time()
     modelname = 'SVM'
-    print('Training {}...'.format(modelname))
     model = SVC(gamma = 'auto', verbose=True)
 
     # Train. Use BaggingClassifier to speed up training
@@ -33,7 +28,7 @@ def train_fold(fold):
 
     # Print time
     end = time()
-    print('{} trained in {}.'.format(modelname, end - start))
+    print('{0} trained in {1:.4f} sec'.format(modelname, end - start))
 
     # Store classifier in fold.
     fold['clf'] = clf
@@ -50,7 +45,9 @@ def train_cache(cache):
 
         # Train every fold
         for i, fold in enumerate(folded_dataset['folds']):
-            print('[{}/{}] Training fold...'.format(i + 1, n_splits))
+            print('[{}/{}] Training fold using {} train- and {} test samples...'
+                .format(i + 1, n_splits, fold['train_indexes'].size,
+                                        fold['test_indexes'].size))
             trained_fold = train_fold(fold)
             folds.append(trained_fold)
 
