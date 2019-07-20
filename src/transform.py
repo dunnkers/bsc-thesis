@@ -1,7 +1,9 @@
 #%%
 import pickle
+from datetime import timedelta
 from os.path import basename, join
 from re import findall
+from time import time
 
 import numpy as np
 from skimage.io import imread_collection
@@ -171,5 +173,7 @@ def prepare_all():
             .format(i + 1, len(CACHES), cache.path))
         prepare_cache(cache)
 
+start = time()
 prepare_all()
-print('Finished dataset preparation.')
+end = time()
+print('Finished transforming in {}'.format(timedelta(seconds=end - start)))

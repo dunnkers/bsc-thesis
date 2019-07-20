@@ -1,4 +1,5 @@
 #%%
+from datetime import timedelta
 from os import makedirs
 from os.path import dirname, exists
 from time import time
@@ -11,7 +12,7 @@ from skimage.exposure import rescale_intensity
 from skimage.filters import threshold_yen
 from skimage.io import imread_collection, imsave
 from skimage.transform import resize
-from skimage.util import img_as_bool, img_as_ubyte
+from skimage.util import img_as_bool, img_as_ubyte, img_as_bool
 from tqdm.auto import tqdm
 
 from constants import (CACHE_DATA_TYPE, CACHES, DATA_PATH, GT_DATA_GLOB,
@@ -90,9 +91,10 @@ def cache_all():
         cache_collection(usv, cache, desc='Caching unsupervised')
 
 def gt_transform(im):
-    return img_as_ubyte(im > threshold_yen(im))
+    return img_as_ubyte(img_as_bool(im))
+    # return img_as_ubyte(im > threshold_yen(im))
 
 start = time()
 cache_all()
 end = time()
-print('Finished caching in {:.2f} sec'.format(end - start))
+print('Finished caching in {}'.format(timedelta(seconds=end - start)))

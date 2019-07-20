@@ -1,4 +1,5 @@
 .vscode/settings.json
+.vscode/.ropeproject
 /data
 /data.zip
 /data_100x200

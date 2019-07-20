@@ -1,9 +1,11 @@
 #%%
 import pickle
+from datetime import timedelta
 from os.path import join
 from time import time
 
 from sklearn.ensemble import BaggingClassifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.svm import SVC
 
 from constants import CACHES, N_JOBS, PICKLEFILE_PREPARED
@@ -16,6 +18,8 @@ def train_fold(fold):
     start = time()
     modelname = 'SVM'
     model = SVC(gamma = 'auto', verbose=True)
+    # modelname = 'SGD'
+    # model = SGDClassifier()
 
     # Train. Use BaggingClassifier to speed up training
     n_estimators = 10
@@ -23,8 +27,9 @@ def train_fold(fold):
         max_samples=1.0 / n_estimators,
         n_estimators=n_estimators,
         n_jobs=N_JOBS)
+
+    # clf = model
     clf.fit(X_train, y_train)
-    # SGD
 
     # Print time
     end = time()
@@ -66,4 +71,4 @@ def train_all():
 start = time()
 train_all()
 end = time()
-print('Finished training in {:.2f} sec'.format(end - start))
+print('Finished training in {}'.format(timedelta(seconds=end - start)))
