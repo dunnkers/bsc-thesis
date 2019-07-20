@@ -75,7 +75,7 @@ def select_ic(X):
 # def prepare_fold(fold):
 #   pass
 
-def prepare_cache(cache):
+def transform_cache(cache):
     """ Prepare images in cache folder. Transforms 2D image arrays into flat
     arrays, samples the images using balanced classes, and combines supervised-
     and unsupervised approaches into a 2-feature vector. """
@@ -167,13 +167,13 @@ def prepare_cache(cache):
     with open(picklepath, 'wb') as handle:
         pickle.dump(folded_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-def prepare_all():
+def transform_all():
     for i, cache in enumerate(CACHES):
         print('[{}/{}] Preparing cache \'{}\'...'
             .format(i + 1, len(CACHES), cache.path))
-        prepare_cache(cache)
+        transform_cache(cache)
 
 start = time()
-prepare_all()
+# transform_all()
 end = time()
 print('Finished transforming in {}'.format(timedelta(seconds=end - start)))

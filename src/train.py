@@ -69,6 +69,6 @@ def train_all():
         train_cache(cache)
 
 start = time()
-train_all()
+# train_all()
 end = time()
 print('Finished training in {}'.format(timedelta(seconds=end - start)))

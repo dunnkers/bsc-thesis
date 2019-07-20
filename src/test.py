@@ -98,6 +98,6 @@ def test_all():
         test_cache(cache)
 
 start = time()
-test_all()
+# test_all()
 end = time()
 print('Finished testing in {}'.format(timedelta(seconds=end - start)))
