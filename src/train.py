@@ -8,59 +8,55 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.svm import SVC
 
-from constants import CACHES, N_JOBS, PICKLEFILE_PREPARED
+from constants import (CACHES, CLASSIFIER, DUMP_TRAINED, DUMP_TRANSFORMED,
+                       N_JOBS)
 
 
 def train_fold(fold):
     X_train, y_train, _, _ = fold['data']
 
     # Select model
-    start = time()
-    modelname = 'SVM'
-    model = SVC(gamma = 'auto', verbose=True)
-    # modelname = 'SGD'
-    # model = SGDClassifier()
+    if CLASSIFIER == 'SVM':
+        model = SVC(gamma = 'auto', verbose=True)
+    elif CLASSIFIER == 'XGBoost':
+        raise NotImplementedError('XGBoost not implemented yet.')
+    else:
+        raise NotImplementedError('Classifier not implemented.')
 
-    # Train. Use BaggingClassifier to speed up training
+    # Use BaggingClassifier to speed up training
     n_estimators = 10
     clf = BaggingClassifier(model,
         max_samples=1.0 / n_estimators,
         n_estimators=n_estimators,
         n_jobs=N_JOBS)
 
-    # clf = model
+    # Train.
+    start = time()
     clf.fit(X_train, y_train)
-
-    # Print time
     end = time()
-    print(' {} trained in {:.2f} sec'.format(modelname, end - start))
+    print(' {} trained in {:.2f} sec'.format(CLASSIFIER, end - start))
 
-    # Store classifier in fold.
-    fold['clf'] = clf
-
-    return fold
+    return clf
 
 def train_cache(cache):
     # Open up prepared cache file
-    picklepath = join(cache.path, PICKLEFILE_PREPARED)
+    picklepath = join(cache.path, DUMP_TRANSFORMED)
     with open(picklepath, 'rb') as handle:
         folded_dataset = pickle.load(handle)
         n_splits = folded_dataset['n_splits']
-        folds = []
+        clfs = []
 
         # Train every fold
         for i, fold in enumerate(folded_dataset['folds']):
             print('[{}/{}] Training fold using {} train- and {} test images...'
                 .format(i + 1, n_splits, fold['train_indexes'].size,
                                         fold['test_indexes'].size))
-            trained_fold = train_fold(fold)
-            folds.append(trained_fold)
+            clf = train_fold(fold)
+            clfs.append(clf)
 
-        # Overwrite folds attribute in dict with `clf` attached to every fold.
-        folded_dataset['folds'] = folds
-
-        with open(picklepath, 'wb') as handle:
-            pickle.dump(folded_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        output_picklepath = join(cache.path, DUMP_TRAINED)
+        with open(output_picklepath, 'wb') as handle:
+            pickle.dump(clfs, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 def train_all():
     for i, cache in enumerate(CACHES):
@@ -69,6 +65,6 @@ def train_all():
         train_cache(cache)
 
 start = time()
-# train_all()
+train_all()
 end = time()
 print('Finished training in {}'.format(timedelta(seconds=end - start)))

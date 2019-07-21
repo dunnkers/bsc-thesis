@@ -30,12 +30,21 @@ CACHES = [
     # Cache('./cache_350x700',  (700, 350))     # 1/2. downscale
 ]
 
-### Current configuration
-MAX_SAMPLES = 100
-N_FOLDS = 5
-PICKLEFILE_PREPARED = 'prepared_{}-fold.pickle'.format(N_FOLDS)
-PICKLEFILE_OUTPUT   = 'output_{}-fold.joblib'.format(N_FOLDS)
-CACHE_DATA_TYPE = uint8
-N_JOBS = -1
+### Configuration
+CACHE_DATA_TYPE = uint8 # 8-bit imaging. So that's; 2^8=256 values, in grayscale.
+N_JOBS = -1 # `-1` for using all CPU cores, `1` for only using one.
 """ When n_jobs is -1, you can't start the program via the vscode integrated 
 terminal. See: https://github.com/microsoft/ptvsd/issues/943 """
+## Variable
+MAX_SAMPLES = 100 # Max. samples per class.
+N_FOLDS = 5
+CLASSIFIER = 'SVM' # Can be either 'SVM' or 'XGBoost'
+
+# Derive filenames off configuration
+dump_filename = lambda stage: ''
+DUMP_TRANSFORMED = "max_samples={},folds={}.pickle".format(
+                        MAX_SAMPLES, N_FOLDS)
+DUMP_TRAINED     = "max_samples={},folds={},clf={}.pickle".format(
+                        MAX_SAMPLES, N_FOLDS, CLASSIFIER)
+DUMP_TESTED      = "max_samples={},folds={},clf={},tested.joblib".format(
+                        MAX_SAMPLES, N_FOLDS, CLASSIFIER)

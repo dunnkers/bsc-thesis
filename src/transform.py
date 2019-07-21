@@ -16,7 +16,7 @@ from sklearn.utils import resample
 from tqdm.auto import tqdm
 
 from constants import (CACHES, GT_FOLDERNAME, GT_IMAGENAME, IMG_GLOB,
-                       MAX_SAMPLES, N_FOLDS, PICKLEFILE_PREPARED,
+                       MAX_SAMPLES, N_FOLDS, DUMP_TRANSFORMED,
                        SV_FOLDERNAME, SV_IMAGENAME, USV_FOLDERNAME,
                        USV_IMAGENAME)
 
@@ -163,7 +163,7 @@ def transform_cache(cache):
                     test_indexes=test_indexes)
         folded_dataset['folds'].append(fold)
 
-    picklepath = join(cache.path, PICKLEFILE_PREPARED)
+    picklepath = join(cache.path, DUMP_TRANSFORMED)
     with open(picklepath, 'wb') as handle:
         pickle.dump(folded_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -174,6 +174,6 @@ def transform_all():
         transform_cache(cache)
 
 start = time()
-# transform_all()
+transform_all()
 end = time()
 print('Finished transforming in {}'.format(timedelta(seconds=end - start)))

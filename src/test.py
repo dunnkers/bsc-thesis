@@ -15,16 +15,15 @@ from sklearn.preprocessing import FunctionTransformer
 from tqdm.auto import tqdm
 
 from constants import (CACHES, GT_FOLDERNAME, OUT_FOLDERNAME,
-                       PICKLEFILE_PREPARED, PICKLEFILE_OUTPUT)
+                       DUMP_TRANSFORMED, DUMP_TRAINED, DUMP_TESTED)
 
 
 def makeDirIfNotExists(impath):
     if not exists(dirname(impath)):
         makedirs(dirname(impath))
 
-def test_fold(fold, cache, gt_files):
+def test_fold(fold, clf, cache, gt_files):
     _, _, X_test, y_test = fold['data']
-    clf = fold['clf']
     test_indexes = fold['test_indexes']
     test_size = test_indexes.size
     
@@ -35,7 +34,7 @@ def test_fold(fold, cache, gt_files):
 
     accuracies = []
     for i, X_test_img in enumerate(X_test_images):
-        if i >= 30:
+        if i >= 5:
             break # 🛑 only test one image for now.
 
         impath_gt = gt_files[test_indexes[i]]
@@ -67,29 +66,37 @@ def test_fold(fold, cache, gt_files):
     return accuracies
 
 def test_cache(cache):
-    picklepath = join(cache.path, PICKLEFILE_PREPARED)
+    picklepath = join(cache.path, DUMP_TRANSFORMED)
     with open(picklepath, 'rb') as handle:
         folded_dataset = pickle.load(handle)
-        n_splits = folded_dataset['n_splits']
-        gt_files = folded_dataset['gt_files']
-        accuracies = []
+        
+        clf_picklepath = join(cache.path, DUMP_TRAINED)
+        with open(clf_picklepath, 'rb') as anotherhandle:
+            clfs = pickle.load(anotherhandle)
 
-        # Test every fold
-        for i, fold in enumerate(folded_dataset['folds']):
-            print('[{}/{}] Testing fold...'.format(i + 1, n_splits))
-            fold_accuracies = test_fold(fold, cache, gt_files)
-            accuracies.append(fold_accuracies)
-        
-        accuracies = np.array(accuracies)
-        print('Cache accuracy: {:.2f}%'.format(accuracies.mean() * 100))
-        
-        # dump results
-        results = { 'accuracies': accuracies, 'mean': accuracies.mean() }
-        dumppath = join(cache.path, PICKLEFILE_OUTPUT)
-        dump(results, dumppath)
-        txtfile = open(dumppath + ".txt", "w")
-        txtfile.writelines(str(results) + "\n") 
-        txtfile.close()
+            n_splits = folded_dataset['n_splits']
+            gt_files = folded_dataset['gt_files']
+            accuracies = []
+
+            # Test every fold
+            for i, fold in enumerate(folded_dataset['folds']):
+                print('[{}/{}] Testing fold...'.format(i + 1, n_splits))
+                clf = clfs[i]
+                fold_accuracies = test_fold(fold, clf, cache, gt_files)
+                accuracies.append(fold_accuracies)
+            
+            accuracies = np.array(accuracies)
+            print('Cache accuracy: {:.2f}%'.format(accuracies.mean() * 100))
+            
+            # dump results
+            results = { 'accuracies': accuracies, 'mean': accuracies.mean() }
+            dumppath = join(cache.path, DUMP_TESTED)
+            dump(results, dumppath)
+            # txt. make a separate module, reading the dumpfile, which 
+            # outputs better looking results.
+            txtfile = open(dumppath + ".txt", "w")
+            txtfile.writelines(str(results)) 
+            txtfile.close()
 
 def test_all():
     for i, cache in enumerate(CACHES):
@@ -98,6 +105,6 @@ def test_all():
         test_cache(cache)
 
 start = time()
-# test_all()
+test_all()
 end = time()
 print('Finished testing in {}'.format(timedelta(seconds=end - start)))
