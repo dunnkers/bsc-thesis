@@ -35,7 +35,7 @@ def train_fold(fold):
     start = time()
     clf.fit(X_train, y_train)
     end = time()
-    print(' {} trained in {:.2f} sec'.format(CLASSIFIER, end - start))
+    print('  {} trained in {:.2f} sec'.format(CLASSIFIER, end - start))
 
     return clf
 

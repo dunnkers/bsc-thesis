@@ -69,8 +69,8 @@ def test_fold(fold, clf, cache, gt_files):
 
         accuracies.append(accuracy)
         
-        if i >= 5: 
-            break # 🛑
+        # if i >= 5: 
+        #     break # 🛑
     
     accuracies = np.array(accuracies)
     print(' Fold accuracy: {:.2f}%'.format(accuracies.mean() * 100))
