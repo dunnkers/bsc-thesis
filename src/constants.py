@@ -8,7 +8,6 @@ IMG_GLOB = '*.png'
 GT_FOLDERNAME  = 'groundtruth'
 SV_FOLDERNAME  = 'supervised'
 USV_FOLDERNAME = 'unsupervised/output'
-OUT_FOLDERNAME = 'output'
 
 GT_IMAGENAME = 'image'
 SV_IMAGENAME = 'image'
@@ -21,13 +20,14 @@ USV_DATA_GLOB = join(DATA_PATH, USV_FOLDERNAME, IMG_GLOB)
 # Caches to save.
 Cache = namedtuple('Cache', ['path', 'shape'])
 CACHES = [
-    Cache('./cache_35x70',      (70, 35)),      # 1/20 downscale
-    # Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
-    # Cache('./cache_70x140',   (140, 70)),     # 1/10 downscale
-    # Cache('./cache_100x200',  (200, 100)),    # 1/7. downscale
+    Cache('./cache_35x70',      (70, 35)),    # 1/20 downscale
+    Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
+    Cache('./cache_70x140',    (140, 70)),    # 1/10 downscale
+    Cache('./cache_100x200',  (200, 100)),    # 1/7. downscale
     Cache('./cache_140x280',  (280, 140)),    # 1/5. downscale
-    # Cache('./cache_175x350',  (350, 175)),    # 1/4. downscale
-    # Cache('./cache_350x700',  (700, 350))     # 1/2. downscale
+    Cache('./cache_175x350',  (350, 175)),    # 1/4. downscale
+    Cache('./cache_350x700',  (700, 350)),    # 1/2. downscale
+    Cache('./cache_525x1050', (1050, 525))    # 3/4. downscale
 ]
 
 ### Configuration
@@ -52,4 +52,8 @@ DUMP_TRANSFORMED = "max_samples={},folds={}.joblib".format(
 DUMP_TRAINED     = "max_samples={},folds={},clf={}.joblib".format(
                         MAX_SAMPLES, N_FOLDS, CLASSIFIER)
 DUMP_TESTED      = "max_samples={},folds={},clf={},tested.joblib".format(
+                        MAX_SAMPLES, N_FOLDS, CLASSIFIER)
+
+# Images output folder
+OUT_FOLDERNAME = 'output_max_samples={},folds={},clf={}'.format(
                         MAX_SAMPLES, N_FOLDS, CLASSIFIER)
