@@ -166,7 +166,7 @@ def transform_cache(cache):
 
 def transform_all():
     for i, cache in enumerate(CACHES):
-        print('[{}/{}] Preparing cache \'{}\'...'
+        print('[{}/{}] Transforming cache \'{}\'...'
             .format(i + 1, len(CACHES), cache.path))
         transform_cache(cache)
 

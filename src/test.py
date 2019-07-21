@@ -22,44 +22,55 @@ def makeDirIfNotExists(impath):
     if not exists(dirname(impath)):
         makedirs(dirname(impath))
 
+def test_image(clf, X, y, shape, impath_gt):
+    # Predict
+    predictions = clf.predict(X) # predictions = np.zeros(np.prod(shape)) # (🧪)
+
+    # Accuracy
+    accuracy = accuracy_score(y, predictions)
+
+    # Reconstruction
+    im = np.reshape(predictions, shape)
+
+    # Output
+    impath_out = impath_gt.replace(GT_FOLDERNAME, OUT_FOLDERNAME)
+    makeDirIfNotExists(impath_out)
+    with catch_warnings(): # prevent contrast warnings.
+        simplefilter("ignore")
+        imsave(impath_out, im, check_contrast=False)
+    
+    return accuracy
+
+
 def test_fold(fold, clf, cache, gt_files):
     _, _, X_test, y_test = fold['data']
     test_indexes = fold['test_indexes']
     test_size = test_indexes.size
     
     # Predict
-    X_test_images = np.split(X_test, test_size) 
-    y_test_images = np.split(y_test, test_size)
-    assert(X_test.shape[0] == y_test.shape[0])
-
+    assert(len(X_test) == len(y_test))
+    X_test_imgs = np.split(X_test, test_size) 
+    y_test_imgs = np.split(y_test, test_size)
+    
     accuracies = []
-    for i, X_test_img in enumerate(X_test_images):
-        if i >= 5:
-            break # 🛑 only test one image for now.
-
-        impath_gt = gt_files[test_indexes[i]]
+    for i in range(test_size):
+        X = X_test_imgs[i]
+        y = y_test_imgs[i]
+        gt_idx = test_indexes[i]
+        impath_gt = gt_files[gt_idx]
+        
         print('  [{}/{}] Predicting {}...'
             .format(i + 1, test_size, basename(impath_gt)), end='\t')
         start = time()
-        predictions = clf.predict(X_test_img) # ⚠️ Only start using terminal.
-        # predictions = np.zeros(np.prod(cache.shape)) # 🧪 For mock runs
-
-        # Accuracy score
-        accuracy = accuracy_score(y_test_images[i], predictions)
+        accuracy = test_image(clf, X, y, cache.shape, impath_gt)
         end = time()
         print('predicted in {0:.2f} sec; accuracy = {1:.2f}%'
             .format(end - start, accuracy * 100))
+
         accuracies.append(accuracy)
-
-        # Reconstruction
-        im = np.reshape(predictions, cache.shape)
-
-        # Save
-        impath_out = impath_gt.replace(GT_FOLDERNAME, OUT_FOLDERNAME)
-        makeDirIfNotExists(impath_out)
-        with catch_warnings(): # prevent contrast warnings.
-            simplefilter("ignore")
-            imsave(impath_out, im, check_contrast=False)
+        
+        if i >= 5:
+            break # 🛑 only test one image for now.
     
     accuracies = np.array(accuracies)
     print(' Fold accuracy: {:.2f}%'.format(accuracies.mean() * 100))
