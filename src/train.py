@@ -21,7 +21,7 @@ def train_fold(fold):
     elif CLASSIFIER == 'XGBoost':
         raise NotImplementedError('XGBoost not implemented yet.')
     else:
-        raise NotImplementedError('Classifier not implemented.')
+        raise NotImplementedError('{} not implemented.'.format(CLASSIFIER))
 
     # Use BaggingClassifier to speed up training
     n_estimators = 10

@@ -55,7 +55,7 @@ class SamplerTransformer(BaseEstimator, TransformerMixin):
         return np.array(resampled).ravel()
     
     def transform(self, X, y = None):
-        return [self.sample(vector) for vector in tqdm(X, desc='Sampling')]
+        return [self.sample(vector) for vector in tqdm(X, desc='  Sampling')]
 
 def im2vec(im):
     """ Flatten 2D image to a 1D vector. Note that `ravel` creates a view,
@@ -64,20 +64,59 @@ def im2vec(im):
 
 def ic2vecs(ic):
     """ Maps images in collection to a 1D vector. """
-    return [im2vec(im) for im in tqdm(ic, desc='Vectorizing')]
+    return [im2vec(im) for im in ic]
 
 def select_ic(X):
     """ Map each image in collection to select the given indices. """
     data, samples = X
     return [vector[indexes] for vector, indexes in zip(data, samples)]
 
-# def prepare_fold(fold):
-#   pass
+def transform_fold(transformers, split, gt_arr, sv_arr, usv_arr):
+    train_indexes, test_indexes = split
+    gt_train, gt_test   = gt_arr[train_indexes],  gt_arr[test_indexes]
+    sv_train, sv_test   = sv_arr[train_indexes],  sv_arr[test_indexes]
+    usv_train, usv_test = usv_arr[train_indexes], usv_arr[test_indexes]
+
+    ### TRAINING
+    # Vectorize
+    gt_train  = transformers['vectorize'].fit_transform(gt_train)
+    sv_train  = transformers['vectorize'].fit_transform(sv_train)
+    usv_train = transformers['vectorize'].fit_transform(usv_train)
+
+    # Sample
+    samples_train = transformers['sampler'].fit_transform(gt_train)
+
+    # Select samples
+    gt_train  = transformers['selector'].fit_transform((gt_train, samples_train))
+    sv_train  = transformers['selector'].fit_transform((sv_train, samples_train))
+    usv_train = transformers['selector'].fit_transform((usv_train, samples_train))
+
+    # Combine into 1D arrays
+    X_train = np.stack((np.hstack(sv_train), np.hstack(usv_train)), axis=-1)
+    y_train = np.hstack(gt_train)
+
+
+    ### TESTING
+    # Vectorize
+    gt_test  = transformers['vectorize'].transform(gt_test)
+    sv_test  = transformers['vectorize'].transform(sv_test)
+    usv_test = transformers['vectorize'].transform(usv_test)
+
+    # Combine into 1D arrays
+    X_test = np.stack((np.hstack(sv_test), np.hstack(usv_test)), axis=-1)
+    y_test = np.hstack(gt_test)
+
+    # Construct fold
+    fold = dict(data=(X_train, y_train, X_test, y_test),
+                train_indexes=train_indexes,
+                test_indexes=test_indexes)
+    return fold
 
 def transform_cache(cache):
     """ Prepare images in cache folder. Transforms 2D image arrays into flat
     arrays, samples the images using balanced classes, and combines supervised-
     and unsupervised approaches into a 2-feature vector. """
+
     # Read ground truth images.
     gt_glob = join(cache.path, GT_FOLDERNAME, IMG_GLOB)
     gt = imread_collection(gt_glob)
@@ -92,83 +131,52 @@ def transform_cache(cache):
     sv  = imread_collection(sv_glob)
     usv = imread_collection(usv_glob)
 
-    # Size
+    # Assert size
     assert(np.size(gt.files) == np.size(sv.files) == np.size(usv.files))
-
-    # Split the set
-    kf = KFold(n_splits=N_FOLDS, shuffle=True, random_state=8)
-    folded_dataset = { # @IDEA use a Dataset class for this.
-        'folds': [],
-        'max_samples': MAX_SAMPLES,
-        'n_splits': N_FOLDS,
-        'gt_files': gt.files
-    }
 
     # Instantiate transformers
     vectorize = FunctionTransformer(ic2vecs, validate=False)
     sampler = SamplerTransformer(max_sample_size=MAX_SAMPLES)
     selector = FunctionTransformer(select_ic, validate=False)
+    transformers = dict(vectorize=vectorize, sampler=sampler, selector=selector)
 
     # Convert image collections to array
+    print(' Converting image collections to arrays...')
+    start = time()
     gt_arr  = np.array(gt)
     sv_arr  = np.array(sv)
     usv_arr = np.array(usv)
+    end = time()
+    print(' Converted to arrays in {}'.format(timedelta(seconds=end - start)))
 
-    for train_indexes, test_indexes in kf.split(gt):
-        i = len(folded_dataset['folds'])
-        print('[{}/{}] Building dataset fold of size {}...'
-            .format(i + 1, N_FOLDS, train_indexes.size))
+    # Split the set
+    kf = KFold(n_splits=N_FOLDS, shuffle=True, random_state=8)
 
-        gt_train, gt_test   = gt_arr[train_indexes],  gt_arr[test_indexes]
-        sv_train, sv_test   = sv_arr[train_indexes],  sv_arr[test_indexes]
-        usv_train, usv_test = usv_arr[train_indexes], usv_arr[test_indexes]
+    # Transform each fold
+    folds = []
+    for i, split in enumerate(kf.split(gt)):
+        print(' [{}/{}] Building dataset fold split {}/{}...'
+            .format(i + 1, N_FOLDS, split[0].size, split[1].size))
+        fold = transform_fold(transformers, split, gt_arr, sv_arr, usv_arr)
+        folds.append(fold)
 
-        ### TRAINING
-        print('Building train data...')
+    # Construct folded dataset
+    folded_dataset = dict(folds=folds,
+                          max_samples=MAX_SAMPLES,
+                          n_splits=N_FOLDS,
+                          gt_files=gt.files)
 
-        # Vectorize
-        gt_train  = vectorize.fit_transform(gt_train)
-        sv_train  = vectorize.fit_transform(sv_train)
-        usv_train = vectorize.fit_transform(usv_train)
-
-        # Sample
-        samples_train = sampler.fit_transform(gt_train)
-
-        # Select samples
-        gt_train  = selector.fit_transform((gt_train, samples_train))
-        sv_train  = selector.fit_transform((sv_train, samples_train))
-        usv_train = selector.fit_transform((usv_train, samples_train))
-
-        # Combine into 1D arrays
-        X_train = np.stack((np.hstack(sv_train), np.hstack(usv_train)), axis=-1)
-        y_train = np.hstack(gt_train)
-
-
-        ### TESTING
-        print('Building test data...')
-
-        # Vectorize
-        gt_test  = vectorize.transform(gt_test)
-        sv_test  = vectorize.transform(sv_test)
-        usv_test = vectorize.transform(usv_test)
-
-        # Combine into 1D arrays
-        X_test = np.stack((np.hstack(sv_test), np.hstack(usv_test)), axis=-1)
-        y_test = np.hstack(gt_test)
-
-        # Add to folded datasets
-        fold = dict(data=(X_train, y_train, X_test, y_test),
-                    train_indexes=train_indexes,
-                    test_indexes=test_indexes)
-        folded_dataset['folds'].append(fold)
-
+    # Dump to file
     dump(folded_dataset, join(cache.path, DUMP_TRANSFORMED))
 
 def transform_all():
     for i, cache in enumerate(CACHES):
         print('[{}/{}] Transforming cache \'{}\'...'
             .format(i + 1, len(CACHES), cache.path))
+        start = time()
         transform_cache(cache)
+        end = time()
+        print('Transformed cache in {}'.format(timedelta(seconds=end - start)))
 
 start = time()
 transform_all()
