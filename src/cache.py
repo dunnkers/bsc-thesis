@@ -12,16 +12,25 @@ from skimage.exposure import rescale_intensity
 from skimage.filters import threshold_yen
 from skimage.io import imread_collection, imsave
 from skimage.transform import resize
-from skimage.util import img_as_bool, img_as_ubyte, img_as_bool
+from skimage.util import img_as_bool, img_as_ubyte
 from tqdm.auto import tqdm
 
 from constants import (CACHE_DATA_TYPE, CACHES, DATA_PATH, GT_DATA_GLOB,
-                       N_JOBS, SV_DATA_GLOB, USV_DATA_GLOB)
+                       GT_TRANSFORM, N_JOBS, SV_DATA_GLOB, USV_DATA_GLOB)
 
 print('GT_DATA_GLOB   =', GT_DATA_GLOB)
 print('SV_DATA_GLOB   =', SV_DATA_GLOB)
 print('USV_DATA_GLOB  =', USV_DATA_GLOB)
 print('CACHES    =', CACHES)
+
+def gt_transform(im):
+    if (GT_TRANSFORM == 'img_as_bool'):
+        return img_as_ubyte(img_as_bool(im))
+    elif (GT_TRANSFORM == 'threshold_yen'):
+        return img_as_ubyte(im > threshold_yen(im))
+    else:
+        raise NotImplementedError('`{}` tranform for GT not implemented.'
+            .format(GT_TRANSFORM))
 
 def cache_image(im, path, shape, transform=None):
     """
@@ -89,10 +98,6 @@ def cache_all():
             transform=gt_transform)
         cache_collection(sv, cache,  desc='Caching   supervised')
         cache_collection(usv, cache, desc='Caching unsupervised')
-
-def gt_transform(im):
-    return img_as_ubyte(img_as_bool(im))
-    # return img_as_ubyte(im > threshold_yen(im))
 
 start = time()
 cache_all()

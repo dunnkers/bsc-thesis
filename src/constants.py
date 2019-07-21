@@ -32,14 +32,18 @@ CACHES = [
 
 ### Configuration
 CACHE_DATA_TYPE = uint8 # 8-bit imaging. So that's; 2^8=256 values, in grayscale.
-N_JOBS = -1 # `-1` for using all CPU cores, `1` for only using one.
-""" When n_jobs is -1, you can't start the program via the vscode integrated 
-terminal. See: https://github.com/microsoft/ptvsd/issues/943 """
-VERBOSE_LOGGING = False
+N_JOBS          = -1    # Parallelization. Use `-1` for using all CPU cores,
+                        # or `1` for only using one.
+                        # can't start with vscode integrated terminal when `-1`
+                        # see: https://github.com/microsoft/ptvsd/issues/943
+VERBOSE_LOGGING = False # Log extra messages during training
+GT_TRANSFORM    = 'img_as_bool'
+                        # Can be either: ('img_as_bool' or 'threshold_yen')
+
 ## Variable
-MAX_SAMPLES = 100 # Max. samples per class.
-N_FOLDS = 5
-CLASSIFIER = 'SVM' # Can be either 'SVM' or 'XGBoost'
+MAX_SAMPLES     = 100   # Max. samples per class.
+N_FOLDS         = 5     # How many folds for k-fold. The `n_splits` parameter.
+CLASSIFIER      = 'SVM' # Can be either: ('SVM' or 'XGBoost').
 
 # Derive filenames off configuration
 dump_filename = lambda stage: ''

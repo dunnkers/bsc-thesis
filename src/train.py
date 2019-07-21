@@ -21,7 +21,8 @@ def train_fold(fold):
     elif CLASSIFIER == 'XGBoost':
         raise NotImplementedError('XGBoost not implemented yet.')
     else:
-        raise NotImplementedError('{} not implemented.'.format(CLASSIFIER))
+        raise NotImplementedError('`{}` classifier not implemented.'
+            .format(CLASSIFIER))
 
     # Use BaggingClassifier to speed up training
     n_estimators = 10
@@ -46,7 +47,7 @@ def train_cache(cache):
 
     # Train every fold
     for i, fold in enumerate(folded_dataset['folds']):
-        print('[{}/{}] Training fold using {} train- and {} test images...'
+        print(' [{}/{}] Training fold using {} train- and {} test images...'
             .format(i + 1, n_splits, fold['train_indexes'].size,
                                      fold['test_indexes'].size))
         clf = train_fold(fold)
