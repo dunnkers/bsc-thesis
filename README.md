@@ -5,7 +5,10 @@
 
 Make sure you place the unpacked `data.zip` dataset under `/data/` such that the paths `/data/groundtruth/`, `data/supervised`, `data/unsupervised` exist.
 
-...
+Run using:
+```
+anaconda-project run
+```
 
 ## About
 

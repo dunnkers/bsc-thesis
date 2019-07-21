@@ -95,6 +95,6 @@ def gt_transform(im):
     # return img_as_ubyte(im > threshold_yen(im))
 
 start = time()
-# cache_all()
+cache_all()
 end = time()
 print('Finished caching in {}'.format(timedelta(seconds=end - start)))

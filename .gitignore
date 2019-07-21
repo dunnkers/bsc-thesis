@@ -7,3 +7,4 @@
 output.txt
 /cache_*
 __pycache__
+/envs
