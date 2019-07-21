@@ -1,11 +1,11 @@
 #%%
-import pickle
 from datetime import timedelta
 from os.path import basename, join
 from re import findall
 from time import time
 
 import numpy as np
+from joblib import dump, load
 from skimage.io import imread_collection
 from skimage.util import img_as_bool
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -15,10 +15,9 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import resample
 from tqdm.auto import tqdm
 
-from constants import (CACHES, GT_FOLDERNAME, GT_IMAGENAME, IMG_GLOB,
-                       MAX_SAMPLES, N_FOLDS, DUMP_TRANSFORMED,
-                       SV_FOLDERNAME, SV_IMAGENAME, USV_FOLDERNAME,
-                       USV_IMAGENAME)
+from constants import (CACHES, DUMP_TRANSFORMED, GT_FOLDERNAME, GT_IMAGENAME,
+                       IMG_GLOB, MAX_SAMPLES, N_FOLDS, SV_FOLDERNAME,
+                       SV_IMAGENAME, USV_FOLDERNAME, USV_IMAGENAME)
 
 print('N_FOLDS =', N_FOLDS)
 
@@ -163,9 +162,7 @@ def transform_cache(cache):
                     test_indexes=test_indexes)
         folded_dataset['folds'].append(fold)
 
-    picklepath = join(cache.path, DUMP_TRANSFORMED)
-    with open(picklepath, 'wb') as handle:
-        pickle.dump(folded_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    dump(folded_dataset, join(cache.path, DUMP_TRANSFORMED))
 
 def transform_all():
     for i, cache in enumerate(CACHES):

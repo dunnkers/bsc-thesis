@@ -35,6 +35,7 @@ CACHE_DATA_TYPE = uint8 # 8-bit imaging. So that's; 2^8=256 values, in grayscale
 N_JOBS = -1 # `-1` for using all CPU cores, `1` for only using one.
 """ When n_jobs is -1, you can't start the program via the vscode integrated 
 terminal. See: https://github.com/microsoft/ptvsd/issues/943 """
+VERBOSE_LOGGING = False
 ## Variable
 MAX_SAMPLES = 100 # Max. samples per class.
 N_FOLDS = 5
@@ -42,9 +43,9 @@ CLASSIFIER = 'SVM' # Can be either 'SVM' or 'XGBoost'
 
 # Derive filenames off configuration
 dump_filename = lambda stage: ''
-DUMP_TRANSFORMED = "max_samples={},folds={}.pickle".format(
+DUMP_TRANSFORMED = "max_samples={},folds={}.joblib".format(
                         MAX_SAMPLES, N_FOLDS)
-DUMP_TRAINED     = "max_samples={},folds={},clf={}.pickle".format(
+DUMP_TRAINED     = "max_samples={},folds={},clf={}.joblib".format(
                         MAX_SAMPLES, N_FOLDS, CLASSIFIER)
 DUMP_TESTED      = "max_samples={},folds={},clf={},tested.joblib".format(
                         MAX_SAMPLES, N_FOLDS, CLASSIFIER)

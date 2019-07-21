@@ -1,15 +1,15 @@
 #%%
-import pickle
 from datetime import timedelta
 from os.path import join
 from time import time
 
+from joblib import dump, load
 from sklearn.ensemble import BaggingClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.svm import SVC
 
 from constants import (CACHES, CLASSIFIER, DUMP_TRAINED, DUMP_TRANSFORMED,
-                       N_JOBS)
+                       N_JOBS, VERBOSE_LOGGING)
 
 
 def train_fold(fold):
@@ -17,7 +17,7 @@ def train_fold(fold):
 
     # Select model
     if CLASSIFIER == 'SVM':
-        model = SVC(gamma = 'auto', verbose=True)
+        model = SVC(gamma = 'auto', verbose=VERBOSE_LOGGING)
     elif CLASSIFIER == 'XGBoost':
         raise NotImplementedError('XGBoost not implemented yet.')
     else:
@@ -40,23 +40,19 @@ def train_fold(fold):
 
 def train_cache(cache):
     # Open up prepared cache file
-    picklepath = join(cache.path, DUMP_TRANSFORMED)
-    with open(picklepath, 'rb') as handle:
-        folded_dataset = pickle.load(handle)
-        n_splits = folded_dataset['n_splits']
-        clfs = []
+    folded_dataset = load(join(cache.path, DUMP_TRANSFORMED))
+    n_splits = folded_dataset['n_splits']
+    clfs = []
 
-        # Train every fold
-        for i, fold in enumerate(folded_dataset['folds']):
-            print('[{}/{}] Training fold using {} train- and {} test images...'
-                .format(i + 1, n_splits, fold['train_indexes'].size,
-                                        fold['test_indexes'].size))
-            clf = train_fold(fold)
-            clfs.append(clf)
+    # Train every fold
+    for i, fold in enumerate(folded_dataset['folds']):
+        print('[{}/{}] Training fold using {} train- and {} test images...'
+            .format(i + 1, n_splits, fold['train_indexes'].size,
+                                     fold['test_indexes'].size))
+        clf = train_fold(fold)
+        clfs.append(clf)
 
-        output_picklepath = join(cache.path, DUMP_TRAINED)
-        with open(output_picklepath, 'wb') as handle:
-            pickle.dump(clfs, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    dump(clfs, join(cache.path, DUMP_TRAINED))
 
 def train_all():
     for i, cache in enumerate(CACHES):
