@@ -21,7 +21,8 @@ from constants import (CACHE_DATA_TYPE, CACHES, DATA_PATH, GT_DATA_GLOB,
 print('GT_DATA_GLOB   =', GT_DATA_GLOB)
 print('SV_DATA_GLOB   =', SV_DATA_GLOB)
 print('USV_DATA_GLOB  =', USV_DATA_GLOB)
-print('CACHES    =', CACHES)
+print('CACHES         = [ {} ]'.format(
+   ',\n                   '.join(map(str, CACHES))))
 
 def gt_transform(im):
     if (GT_TRANSFORM == 'img_as_bool'):
@@ -94,10 +95,10 @@ def cache_all():
     for i, cache in enumerate(CACHES):
         print('[{}/{}] Writing cache to \'{}\'...'
             .format(i + 1, len(CACHES), cache.path))
-        cache_collection(gt, cache,  desc='Caching  groundtruth',
+        cache_collection(gt, cache,  desc=' Caching  groundtruth',
             transform=gt_transform)
-        cache_collection(sv, cache,  desc='Caching   supervised')
-        cache_collection(usv, cache, desc='Caching unsupervised')
+        cache_collection(sv, cache,  desc=' Caching   supervised')
+        cache_collection(usv, cache, desc=' Caching unsupervised')
 
 start = time()
 cache_all()
