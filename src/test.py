@@ -91,11 +91,16 @@ def test_cache(cache):
         accuracies.append(fold_accuracies)
     
     accuracies = np.array(accuracies)
-    print('Cache accuracy: {:.2f}%'.format(accuracies.mean() * 100))
+
+    # Compute mean
+    # -> fold shapes are not guaranteed to be homogeneous, so we cannot
+    # just use np.mean() directly.
+    mean = np.mean(list(map(np.mean, accuracies)))
+    print('Cache accuracy: {:.2f}%'.format(mean * 100))
     
     ## Dump results
     # dumpfile
-    results = dict(accuracies=accuracies, mean=accuracies.mean())
+    results = dict(accuracies=accuracies, mean=mean)
     dumppath = join(cache.path, DUMP_TESTED)
     dump(results, dumppath)
 
