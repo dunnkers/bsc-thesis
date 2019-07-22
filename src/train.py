@@ -7,6 +7,7 @@ from joblib import dump, load
 from sklearn.ensemble import BaggingClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.svm import SVC
+from xgboost import XGBClassifier
 
 from constants import (CACHES, CLASSIFIER, DUMP_TRAINED, DUMP_TRANSFORMED,
                        N_JOBS, VERBOSE_LOGGING)
@@ -19,7 +20,9 @@ def train_fold(fold):
     if CLASSIFIER == 'SVM':
         model = SVC(gamma = 'auto', verbose=VERBOSE_LOGGING)
     elif CLASSIFIER == 'XGBoost':
-        raise NotImplementedError('XGBoost not implemented yet.')
+        model = XGBClassifier(objective="binary:logistic", random_state=42,
+            n_jobs=N_JOBS,
+            verbosity=1 if VERBOSE_LOGGING else 0)
     else:
         raise NotImplementedError('`{}` classifier not implemented.'
             .format(CLASSIFIER))

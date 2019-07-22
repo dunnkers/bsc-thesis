@@ -8,7 +8,6 @@ from warnings import catch_warnings, simplefilter
 
 import numpy as np
 from joblib import dump, load
-from matplotlib import pyplot
 from skimage.io import imread_collection, imsave, imshow
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import FunctionTransformer
@@ -96,7 +95,7 @@ def test_cache(cache):
     
     ## Dump results
     # dumpfile
-    results = { 'accuracies': accuracies, 'mean': accuracies.mean() }
+    results = dict(accuracies=accuracies, mean=accuracies.mean())
     dumppath = join(cache.path, DUMP_TESTED)
     dump(results, dumppath)
 

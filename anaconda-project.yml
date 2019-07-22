@@ -75,6 +75,7 @@ packages:
 - joblib
 - pip:
   - fire
+  - xgboost
 
 #
 # In the channels section, list any Conda channel URLs to be searched

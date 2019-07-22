@@ -43,7 +43,8 @@ GT_TRANSFORM    = 'img_as_bool'
 ## Variable
 MAX_SAMPLES     = 100   # Max. samples per class.
 N_FOLDS         = 5     # How many folds for k-fold. The `n_splits` parameter.
-CLASSIFIER      = 'SVM' # Can be either: ('SVM' or 'XGBoost').
+CLASSIFIER      = 'XGBoost'
+                        # Can be either: ('SVM' or 'XGBoost').
 
 # Derive filenames off configuration
 dump_filename = lambda stage: ''
