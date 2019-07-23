@@ -1,10 +1,27 @@
 #%%
-from os.path import join, exists
+from os.path import exists, join
 
-from joblib import dump, load
 import numpy as np
-from constants import CACHES, DUMP_TESTED, CLASSIFIER
+from joblib import dump, load
 from matplotlib import pyplot
+from skimage.io import imread, imshow
+
+from constants import CACHES, CLASSIFIER, DUMP_TESTED
+
+
+def plot_gt_histogram():
+    # pyplot.figure(figsize=(5, 10), dpi=80)
+    im = imread('./data/groundtruth/image1.png', as_gray=True)
+    pyplot.subplot(1, 2, 1).set_title("Groundtruth image")
+    imshow(im)
+    # ax_hist = pyplot.subplot()
+    ax_hist = pyplot.subplot(1, 2, 2)
+    ax_hist.set_title("Histogram in 6-bit bins")
+    ax_hist.hist(im.ravel(), bins=64, log=True)
+    # pyplot.show()
+    pyplot.tight_layout()
+    pyplot.savefig('groundtruth-histogram.png')
+
 
 def plot_all():
     data = []

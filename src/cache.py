@@ -8,7 +8,6 @@ from warnings import catch_warnings, simplefilter
 from joblib import Parallel, delayed
 from numpy import uint8
 from skimage.color import rgb2gray
-from skimage.exposure import rescale_intensity
 from skimage.filters import threshold_yen
 from skimage.io import imread_collection, imsave
 from skimage.transform import resize
@@ -26,9 +25,9 @@ print('CACHES         = [ {} ]'.format(
 
 def gt_transform(im):
     if (GT_TRANSFORM == 'img_as_bool'):
-        return img_as_ubyte(img_as_bool(im))
+        return img_as_bool(im)
     elif (GT_TRANSFORM == 'threshold_yen'):
-        return img_as_ubyte(im > threshold_yen(im))
+        return im > threshold_yen(im)
     else:
         raise NotImplementedError('`{}` tranform for GT not implemented.'
             .format(GT_TRANSFORM))
