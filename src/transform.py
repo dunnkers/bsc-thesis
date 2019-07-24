@@ -50,7 +50,7 @@ class SamplerTransformer(BaseEstimator, TransformerMixin):
         minority = np.argmin(counts)
         assert(self.max_sample_size % 2 == 0) # make sure is divisible by 2.
         n_samples = int(self.max_sample_size / 2) or counts[minority]
-        resampled = [resample(split, n_samples=n_samples, random_state=41)
+        resampled = [resample(split, n_samples=n_samples)
                 for split in splitted]
 
         return np.array(resampled).ravel()
@@ -151,7 +151,7 @@ def transform_cache(cache):
     print(' Converted to arrays in {}'.format(timedelta(seconds=end - start)))
 
     # Split the set
-    kf = KFold(n_splits=N_FOLDS, shuffle=True, random_state=8)
+    kf = KFold(n_splits=N_FOLDS, shuffle=True)
 
     # Transform each fold
     folds = []

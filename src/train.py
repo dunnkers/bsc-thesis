@@ -20,7 +20,7 @@ def train_fold(fold):
     if CLASSIFIER == 'SVM':
         model = SVC(gamma = 'auto', verbose=VERBOSE_LOGGING)
     elif CLASSIFIER == 'XGBoost':
-        model = XGBClassifier(objective="binary:logistic", random_state=42,
+        model = XGBClassifier(objective="binary:logistic",
             n_jobs=N_JOBS,
             verbosity=1 if VERBOSE_LOGGING else 0)
     else:
