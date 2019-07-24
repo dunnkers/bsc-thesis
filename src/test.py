@@ -53,7 +53,7 @@ def test_fold(fold, clf, cache, gt_files, i):
     
     accuracies = []
     for i in tqdm(range(test_size),
-        desc=' Testing fold #{}'.format(i), unit='img'):
+        desc=' Testing fold  {}'.format(i + 1), unit='img'):
         X = X_test_imgs[i]
         y = y_test_imgs[i]
         gt_idx = test_indexes[i]
@@ -71,31 +71,36 @@ def test_cache(cache):
 
     n_splits = folded_dataset['n_splits']
     gt_files = folded_dataset['gt_files']
-    accuracies = []
+    folds    = folded_dataset['folds']
 
     # Test every fold
-    for i, fold in enumerate(tqdm(folded_dataset['folds'],
-        desc=' Testing {} folds'.format(n_splits), unit='fold')):
+    for i in tqdm(range(n_splits), 
+        desc=' Testing {} folds'.format(n_splits), unit='fold'):
         clf = clfs[i]
+        fold = folds[i]
         fold_accuracies = test_fold(fold, clf, cache, gt_files, i)
-        accuracies.append(fold_accuracies)
-    
-    accuracies = np.array(accuracies)
+
+        # Save accuracy
+        fold['accuracies'] = fold_accuracies
+
+        # Detach data from fold: do not dump data.
+        del fold['data']
 
     # Compute mean
-    # -> fold shapes are not guaranteed to be homogeneous, so we cannot
-    # just use np.mean() directly.
-    mean = np.mean(list(map(np.mean, accuracies)))
-    print('Cache accuracy: {:.2f}%'.format(mean * 100))
+    # > fold shapes are not guaranteed to be homogeneous. take into account
+    # whilst using numpy functions. some expect homogeneous arrays, like mean().
+    means = list(map(
+        lambda fold: np.round(np.mean(fold['accuracies']), decimals=4), folds))
+    tqdm.write('\nCache accuracies: {}, mean = {:.4f}'
+        .format(means, np.mean(means)))
     
     # Dump results
-    results = dict(accuracies=accuracies, mean=mean)
     dumppath = join(cache.path, DUMP_TESTED)
-    dump(results, dumppath)
+    dump(folded_dataset, dumppath)
 
     # txtfile
     txtfile = open(dumppath + ".txt", "w")
-    txtfile.writelines(str(results)) 
+    txtfile.writelines(str(folded_dataset)) 
     txtfile.close()
 
 def test_all():
