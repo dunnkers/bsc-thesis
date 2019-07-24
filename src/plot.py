@@ -6,7 +6,7 @@ from joblib import dump, load
 from matplotlib import pyplot
 from skimage.io import imread, imshow
 
-from constants import CACHES, CLASSIFIER, DUMP_TESTED
+from constants import CACHES, DUMP_TESTED, OUT_FOLDERNAME, VISUALS_FOLDERPATH
 
 
 def plot_gt_histogram():
@@ -14,14 +14,12 @@ def plot_gt_histogram():
     im = imread('./data/groundtruth/image1.png', as_gray=True)
     pyplot.subplot(1, 2, 1).set_title("Groundtruth image")
     imshow(im)
-    # ax_hist = pyplot.subplot()
     ax_hist = pyplot.subplot(1, 2, 2)
     ax_hist.set_title("Histogram in 6-bit bins")
     ax_hist.hist(im.ravel(), bins=64, log=True)
-    # pyplot.show()
+    
     pyplot.tight_layout()
-    pyplot.savefig('groundtruth-histogram.png')
-
+    pyplot.savefig(join(VISUALS_FOLDERPATH, 'groundtruth-histogram.svg'))
 
 def plot_all():
     data = []
@@ -50,9 +48,10 @@ def plot_all():
     _, ax = pyplot.subplots()
     ax.set_xlabel('(width x height) in pixels')
     ax.set_ylabel('Accuracy score')
-    ax.set_title('Results for {}'.format(CLASSIFIER))
+    ax.set_title('Results for {}'.format(OUT_FOLDERNAME))
     ax.boxplot(data, labels=labels)
-    pyplot.show()
+    pyplot.savefig(join(VISUALS_FOLDERPATH, '{}-boxplot.svg'
+        .format(OUT_FOLDERNAME)))
 
-# plot_cache(CACHES[0])
+plot_gt_histogram()
 plot_all()

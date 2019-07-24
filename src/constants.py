@@ -58,3 +58,6 @@ DUMP_TESTED      = "max_samples={},folds={},clf={},tested.joblib".format(
 # Images output folder
 OUT_FOLDERNAME = 'output_max_samples={},folds={},clf={}'.format(
                         MAX_SAMPLES, N_FOLDS, CLASSIFIER)
+
+# Visualization output folder
+VISUALS_FOLDERPATH = '../bsc-thesis-report/img/'
