@@ -42,7 +42,7 @@ GT_TRANSFORM    = 'img_as_bool'
                         # Can be either: ('img_as_bool' or 'threshold_yen')
 
 ## Variable
-MAX_SAMPLES     = 200   # Max. samples per class.
+MAX_SAMPLES     = 100   # Max. samples per class.
 N_FOLDS         = 5     # How many folds for k-fold. The `n_splits` parameter.
 CLASSIFIER      = 'XGBoost'
                         # Can be either: ('SVM' or 'XGBoost').

@@ -83,7 +83,7 @@ def cache_collection(ic, cache, transform=None, desc='Caching'):
     Parallel(n_jobs=N_JOBS)(
         # wrap cache_image() with `delayed`
         delayed(cache_image)(ic[idx], impath, cache.shape, transform=transform)
-        for idx, impath in enumerate(tqdm(files, desc=desc, unit='imgs'))
+        for idx, impath in enumerate(tqdm(files, desc=desc, unit='img'))
     )
 
 def cache_all():

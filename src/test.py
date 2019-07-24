@@ -41,7 +41,7 @@ def test_image(clf, X, y, shape, impath_gt):
     return accuracy
 
 
-def test_fold(fold, clf, cache, gt_files):
+def test_fold(fold, clf, cache, gt_files, i):
     _, _, X_test, y_test = fold['data']
     test_indexes = fold['test_indexes']
     test_size = test_indexes.size
@@ -52,27 +52,17 @@ def test_fold(fold, clf, cache, gt_files):
     y_test_imgs = np.split(y_test, test_size)
     
     accuracies = []
-    for i in range(test_size):
+    for i in tqdm(range(test_size),
+        desc=' Testing fold #{}'.format(i), unit='img'):
         X = X_test_imgs[i]
         y = y_test_imgs[i]
         gt_idx = test_indexes[i]
         impath_gt = gt_files[gt_idx]
         
-        print('  [{}/{}] Predicting {}...'
-            .format(i + 1, test_size, basename(impath_gt)), end='\t')
-        start = time()
         accuracy = test_image(clf, X, y, cache.shape, impath_gt)
-        end = time()
-        print('predicted in {0:.2f} sec; accuracy = {1:.2f}%'
-            .format(end - start, accuracy * 100))
-
         accuracies.append(accuracy)
-        
-        # if i >= 5: 
-        #     break # 🛑
     
     accuracies = np.array(accuracies)
-    print(' Fold accuracy: {:.2f}%'.format(accuracies.mean() * 100))
     return accuracies
 
 def test_cache(cache):
@@ -84,10 +74,10 @@ def test_cache(cache):
     accuracies = []
 
     # Test every fold
-    for i, fold in enumerate(folded_dataset['folds']):
-        print('[{}/{}] Testing fold...'.format(i + 1, n_splits))
+    for i, fold in enumerate(tqdm(folded_dataset['folds'],
+        desc=' Testing {} folds'.format(n_splits), unit='fold')):
         clf = clfs[i]
-        fold_accuracies = test_fold(fold, clf, cache, gt_files)
+        fold_accuracies = test_fold(fold, clf, cache, gt_files, i)
         accuracies.append(fold_accuracies)
     
     accuracies = np.array(accuracies)
@@ -98,14 +88,12 @@ def test_cache(cache):
     mean = np.mean(list(map(np.mean, accuracies)))
     print('Cache accuracy: {:.2f}%'.format(mean * 100))
     
-    ## Dump results
-    # dumpfile
+    # Dump results
     results = dict(accuracies=accuracies, mean=mean)
     dumppath = join(cache.path, DUMP_TESTED)
     dump(results, dumppath)
 
     # txtfile
-    # @TODO -> make a separate module, reading the dumpfile, then display results.
     txtfile = open(dumppath + ".txt", "w")
     txtfile.writelines(str(results)) 
     txtfile.close()
