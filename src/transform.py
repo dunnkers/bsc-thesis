@@ -48,7 +48,8 @@ class SamplerTransformer(BaseEstimator, TransformerMixin):
         # resample. balance equally, to max_sample_size or to minority size.
         # > note: resample with stratify is sklearn >= v0.21.2
         minority = np.argmin(counts)
-        n_samples = self.max_sample_size or counts[minority]
+        assert(self.max_sample_size % 2 == 0) # make sure is divisible by 2.
+        n_samples = int(self.max_sample_size / 2) or counts[minority]
         resampled = [resample(split, n_samples=n_samples, random_state=41)
                 for split in splitted]
 
