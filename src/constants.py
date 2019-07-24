@@ -42,24 +42,22 @@ GT_TRANSFORM    = 'img_as_bool'
                         # Can be either: ('img_as_bool' or 'threshold_yen')
 
 ## Variable
-MAX_SAMPLES     = 100   # Max. samples per class.
-N_FOLDS         = 5     # How many folds for k-fold. The `n_splits` parameter.
-CLASSIFIER      = 'XGBoost'
+MAX_SAMPLES     = 200   # Max. samples per class.
+N_FOLDS         = 10    # How many folds for k-fold. The `n_splits` parameter.
+CLASSIFIER      = 'SVM'
                         # Can be either: ('SVM' or 'XGBoost').
 
 # Derive filenames off configuration
 dump_filename = lambda stage: ''
-DUMP_TRANSFORMED = "filtered,max_samples={},folds={}.joblib".format(
+DUMP_TRANSFORMED = "max_samples={},folds={}.joblib".format(
                         MAX_SAMPLES, N_FOLDS)
-DUMP_TRAINED     = "filtered,max_samples={},folds={},clf={}.joblib".format(
+DUMP_TRAINED     = "max_samples={},folds={},clf={}.joblib".format(
                         MAX_SAMPLES, N_FOLDS, CLASSIFIER)
-DUMP_TESTED      = "filtered,max_samples={},folds={},clf={},tested.joblib".format(
+DUMP_TESTED      = "max_samples={},folds={},clf={},tested.joblib".format(
                         MAX_SAMPLES, N_FOLDS, CLASSIFIER)
 
 # Images output folder
-# OUT_FOLDERNAME = 'filtered,output_max_samples={},folds={},clf={}'.format(
-#                         MAX_SAMPLES, N_FOLDS, CLASSIFIER)
-OUT_FOLDERNAME = 'max_samples={},folds={},clf={}'.format(
+OUT_FOLDERNAME = 'max_samples={},folds={},clf={},output'.format(
                         MAX_SAMPLES, N_FOLDS, CLASSIFIER)
 
 # Visualization output folder
