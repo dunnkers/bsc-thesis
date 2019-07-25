@@ -21,12 +21,12 @@ USV_DATA_GLOB = join(DATA_PATH, USV_FOLDERNAME, IMG_GLOB)
 # Caches to save.
 Cache = namedtuple('Cache', ['path', 'shape'])
 CACHES = [
-    # Cache('./cache_35x70',      (70, 35)),    # 1/20 downscale
-    # Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
-    # Cache('./cache_70x140',    (140, 70)),    # 1/10 downscale
-    # Cache('./cache_100x200',  (200, 100)),    # 1/7. downscale
-    # Cache('./cache_140x280',  (280, 140)),    # 1/5. downscale
-    # Cache('./cache_175x350',  (350, 175)),    # 1/4. downscale
+    Cache('./cache_35x70',      (70, 35)),    # 1/20 downscale
+    Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
+    Cache('./cache_70x140',    (140, 70)),    # 1/10 downscale
+    Cache('./cache_100x200',  (200, 100)),    # 1/7. downscale
+    Cache('./cache_140x280',  (280, 140)),    # 1/5. downscale
+    Cache('./cache_175x350',  (350, 175)),    # 1/4. downscale
     Cache('./cache_350x700',  (700, 350)),    # 1/2. downscale
     Cache('./cache_525x1050', (1050, 525))    # 3/4. downscale
 ]
@@ -44,21 +44,21 @@ GT_TRANSFORM    = 'img_as_bool'
 ## Variable
 MAX_SAMPLES     = 200   # Max. samples per class.
 N_FOLDS         = 10    # How many folds for k-fold. The `n_splits` parameter.
-CLASSIFIER      = 'XGBoost'
+CLASSIFIER      = 'SVM'
                         # Can be either: ('SVM' or 'XGBoost').
 
+# Configuration strings
+CONFIG_STR_NOCLF = 'max_samples={},folds={}'.format(MAX_SAMPLES, N_FOLDS)
+CONFIG_STR       = '{},clf={}'.format(CONFIG_STR_NOCLF, CLASSIFIER)
+
 # Derive filenames off configuration
-dump_filename = lambda stage: ''
-DUMP_TRANSFORMED = "max_samples={},folds={}.joblib".format(
-                        MAX_SAMPLES, N_FOLDS)
-DUMP_TRAINED     = "max_samples={},folds={},clf={}.joblib".format(
-                        MAX_SAMPLES, N_FOLDS, CLASSIFIER)
-DUMP_TESTED      = "max_samples={},folds={},clf={},tested.joblib".format(
-                        MAX_SAMPLES, N_FOLDS, CLASSIFIER)
+DUMP_TRANSFORMED = "{}.joblib".format(CONFIG_STR_NOCLF)
+DUMP_TRAINED     = "{}.joblib".format(CONFIG_STR)
+DUMP_TESTED      = "{},tested.joblib".format(CONFIG_STR)
 
 # Images output folder
-OUT_FOLDERNAME = 'max_samples={},folds={},clf={},output'.format(
-                        MAX_SAMPLES, N_FOLDS, CLASSIFIER)
+OUT_FOLDERNAME   = '{},output'.format(CONFIG_STR)
 
 # Visualization output folder
 VISUALS_FOLDERPATH = '../bsc-thesis-report/img/'
+VISUALS_CONFIG_STR = 'folds={}, clf={}'.format(N_FOLDS, CLASSIFIER)
