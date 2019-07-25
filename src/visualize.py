@@ -13,7 +13,7 @@ from constants import (CACHES, DATA_PATH, DUMP_TESTED, GT_FOLDERNAME,
                        VISUALS_FOLDERPATH)
 
 
-def plot_comparison():
+def plot_prediction_img_comparison():
     """ Plot comparison chart between groundtruth, supervised, unsupervised-
         and the prediction. """
     # Read images
@@ -69,27 +69,8 @@ def plot_gt_histogram():
 
 # def plot_confusion_matrix():
 
-# def plot_accuracy_distribution():
-#     folds = [
-#         dict(accuracies=[0.99, 0.81, 0.33, 0.87, 0.99, 0.94]),
-#         dict(accuracies=[0.76, 0.84, 0.92, 0.78, 0.99, 0.43])
-#     ]
-#     fold = folds[0]
-#     accuracies = np.array(fold['accuracies'])
-#     hist_data = accuracies.ravel()
 
-#     ax_hist = pyplot.subplot()
-#     ax_hist.set_title("Accuracy distribution")
-#     _, x, _ = ax_hist.hist(hist_data, bins=64, density=True)
-#     density = stats.gaussian_kde(hist_data)
-#     pyplot.plot(x, density(x))
-    
-#     # Save
-#     pyplot.tight_layout()
-#     pyplot.savefig(join(VISUALS_FOLDERPATH, 'accuracy-distribution.svg'))
-
-
-def plot_boxplot():
+def plot_overall_performance():
     """ Compare cache performance by plotting several boxplots, resembling
         mean fold accuracies. """
 
@@ -119,16 +100,6 @@ def plot_boxplot():
         per_cache_means.append(fold_mean_accuracies)
         per_cache_accuracies.append(cache_accuracies)
 
-        # boxplot
-        # Compute per-fold mean accuracy
-        # fold_mean_accuracy = lambda fold: np.mean(fold['accuracies'])
-        # folds_mean_accuracies = list(map(fold_mean_accuracy, folds))
-        # data.append(folds_mean_accuracies)
-        # fold_accuracies = []
-        # for fold in folds:
-        #     fold_accuracies.extend(fold['accuracies'])
-        # data.append(fold_accuracies)
-
         # Attach pixel configuration label
         h, w = cache.shape
         labels.append('{}x{}'.format(w, h))
@@ -137,11 +108,10 @@ def plot_boxplot():
         print('No boxplot plotted! - no data for current config found!')
         return
 
-    # 2- col plot
+    ##### 2- row plot of accuracy distribution
     fig, ax = pyplot.subplots(2, 1)
     fig.set_figheight(7)
-
-    # Violin plot
+    # (1) Violin plot
     ax_viol = pyplot.subplot(2, 1, 1)
     ax_viol.set_title('Results for {}'.format(OUT_FOLDERNAME))
     ax_viol.set_xlabel('(width x height) in pixels')
@@ -153,21 +123,19 @@ def plot_boxplot():
     ax_viol.set_xticklabels(labels)
     ax_viol.set_yticks(np.arange(0, 1.1, step=0.1))
 
-    # Accuracy distribution
+    # (2) Accuracy distribution
     ax_hist = pyplot.subplot(2, 1, 2)
     ax_hist.set_title("Accuracy score distribution")
     _, x, _ = ax_hist.hist(all_accuracies, bins=32, density=True, log=True)
     density = stats.gaussian_kde(all_accuracies)
     ax_hist.plot(x, density(x))
-    
+
     # Save
     fig.tight_layout()
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-accuracy-distribution.svg'
         .format(OUT_FOLDERNAME)))
     
-
-    
-    # Boxplot with fold means
+    ##### Boxplot with fold means
     fig, ax = pyplot.subplots()
     ax.set_xlabel('(width x height) in pixels')
     ax.set_ylabel('Accuracy score')
@@ -178,7 +146,6 @@ def plot_boxplot():
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-boxplot.svg'
         .format(OUT_FOLDERNAME)))
 
-plot_comparison()
+plot_prediction_img_comparison()
 plot_gt_histogram()
-# plot_accuracy_distribution()
-plot_boxplot()
+plot_overall_performance()
