@@ -21,12 +21,12 @@ USV_DATA_GLOB = join(DATA_PATH, USV_FOLDERNAME, IMG_GLOB)
 # Caches to save.
 Cache = namedtuple('Cache', ['path', 'shape'])
 CACHES = [
-    Cache('./cache_35x70',      (70, 35)),    # 1/20 downscale
-    Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
-    Cache('./cache_70x140',    (140, 70)),    # 1/10 downscale
-    Cache('./cache_100x200',  (200, 100)),    # 1/7. downscale
-    Cache('./cache_140x280',  (280, 140)),    # 1/5. downscale
-    Cache('./cache_175x350',  (350, 175)),    # 1/4. downscale
+    # Cache('./cache_35x70',      (70, 35)),    # 1/20 downscale
+    # Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
+    # Cache('./cache_70x140',    (140, 70)),    # 1/10 downscale
+    # Cache('./cache_100x200',  (200, 100)),    # 1/7. downscale
+    # Cache('./cache_140x280',  (280, 140)),    # 1/5. downscale
+    # Cache('./cache_175x350',  (350, 175)),    # 1/4. downscale
     Cache('./cache_350x700',  (700, 350)),    # 1/2. downscale
     Cache('./cache_525x1050', (1050, 525))    # 3/4. downscale
 ]
@@ -44,7 +44,7 @@ GT_TRANSFORM    = 'img_as_bool'
 ## Variable
 MAX_SAMPLES     = 200   # Max. samples per class.
 N_FOLDS         = 10    # How many folds for k-fold. The `n_splits` parameter.
-CLASSIFIER      = 'SVM'
+CLASSIFIER      = 'XGBoost'
                         # Can be either: ('SVM' or 'XGBoost').
 
 # Derive filenames off configuration

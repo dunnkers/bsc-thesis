@@ -1,0 +1,239 @@
+(base) ➜  bsc-thesis git:(master) ✗ ~/anaconda3/bin/python ./src/cache.py; ~/anaconda3/bin/python ./src/transform.py; ~/anacond
+a3/bin/python ./src/train.py; ~/anaconda3/bin/python ./src/test.py
+GT_DATA_GLOB   = ./data/groundtruth/*.png
+SV_DATA_GLOB   = ./data/supervised/*.png
+USV_DATA_GLOB  = ./data/unsupervised/output/*.png
+CACHES         = [ Cache(path='./cache_350x700', shape=(700, 350)),
+                   Cache(path='./cache_525x1050', shape=(1050, 525)) ]
+[1/2] Writing cache to './cache_350x700'...
+ Caching  groundtruth: 0img [00:00, ?img/s]
+ Caching   supervised: 0img [00:00, ?img/s]
+ Caching unsupervised: 0img [00:00, ?img/s]
+[2/2] Writing cache to './cache_525x1050'...
+ Caching  groundtruth: 0img [00:00, ?img/s]
+ Caching   supervised: 0img [00:00, ?img/s]
+ Caching unsupervised: 0img [00:00, ?img/s]
+Finished caching in 0:00:00.633049
+N_FOLDS = 10
+[1/2] Transforming cache './cache_350x700'...
+ Converting image collections to arrays...
+ Converted to arrays in 0:00:17.806342
+ [1/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:02<00:00, 353.92it/s]
+ [2/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:02<00:00, 348.27it/s]
+ [3/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:02<00:00, 342.97it/s]
+ [4/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:02<00:00, 331.15it/s]
+ [5/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:02<00:00, 352.94it/s]
+ [6/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:02<00:00, 350.65it/s]
+ [7/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:02<00:00, 352.92it/s]
+ [8/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:02<00:00, 351.79it/s]
+ [9/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:02<00:00, 349.28it/s]
+ [10/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:02<00:00, 351.45it/s]
+Transformed cache in 0:00:52.439583
+[2/2] Transforming cache './cache_525x1050'...
+ Converting image collections to arrays...
+ Converted to arrays in 0:00:37.020904
+ [1/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:05<00:00, 154.18it/s]
+ [2/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:05<00:00, 153.84it/s]
+ [3/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:05<00:00, 152.90it/s]
+ [4/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:05<00:00, 151.85it/s]
+ [5/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:05<00:00, 154.75it/s]
+ [6/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:05<00:00, 153.13it/s]
+ [7/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:05<00:00, 154.91it/s]
+ [8/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:05<00:00, 154.33it/s]
+ [9/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:05<00:00, 152.31it/s]
+ [10/10] Building dataset fold split 900/100...
+  Sampling: 100%|███████████████████████████████████████████████████████████████████████████| 900/900 [00:05<00:00, 151.39it/s]
+Transformed cache in 0:02:12.243488
+Finished transforming in 0:03:04.695632
+[1/2] Training cache './cache_350x700'...
+ [1/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 11.63 sec
+ [2/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.21 sec
+ [3/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.23 sec
+ [4/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.15 sec
+ [5/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.38 sec
+ [6/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.16 sec
+ [7/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.22 sec
+ [8/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.16 sec
+ [9/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.12 sec
+ [10/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.34 sec
+[2/2] Training cache './cache_525x1050'...
+ [1/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.20 sec
+ [2/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.20 sec
+ [3/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.34 sec
+ [4/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.21 sec
+ [5/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.25 sec
+ [6/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.25 sec
+ [7/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.24 sec
+ [8/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.17 sec
+ [9/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.33 sec
+ [10/10] Training fold using 900 train- and 100 test images...
+  XGBoost trained in 10.27 sec
+Finished training in 0:03:32.013069
+[1/2] Testing cache './cache_350x700'...
+ Testing 10 folds:  10%|██████▉                                                              | 1/10 [02:04<18:36, 124.01s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds:  20%|█████████████▊                                                       | 2/10 [04:10<16:38, 124.83s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopp
+ed while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds:  40%|███████████████████████████▌                                         | 4/10 [08:20<12:28, 124.83s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopp
+ed while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds:  60%|█████████████████████████████████████████▍                           | 6/10 [12:30<08:19, 124.88s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopp
+ed while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds:  80%|███████████████████████████████████████████████████████▏             | 8/10 [16:41<04:10, 125.09s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopp
+ed while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds: 100%|████████████████████████████████████████████████████████████████████| 10/10 [20:51<00:00, 124.87s/fold]
+ Testing fold  10: 100%|████████████████████████████████████████████████████████████████████| 100/100 [02:04<00:00,  1.18s/img]
+Cache accuracies: [0.9568, 0.9612, 0.9519, 0.9503, 0.9513, 0.9507, 0.9536, 0.9543, 0.947, 0.9471], mean = 0.9524
+[2/2] Testing cache './cache_525x1050'...
+ Testing 10 folds:   0%|                                                                              | 0/10 [00:00<?, ?fold/s]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopp
+ed while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds:  10%|██████▉                                                              | 1/10 [04:44<42:40, 284.49s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopp
+ed while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopp
+ed while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopp
+ed while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds:  30%|████████████████████▋                                                | 3/10 [14:16<33:15, 285.09s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopp
+ed while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopp
+ed while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds:  40%|███████████████████████████▌                                         | 4/10 [19:03<28:33, 285.61s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds:  50%|██████████████████████████████████▌                                  | 5/10 [23:50<23:50, 286.16s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds:  60%|█████████████████████████████████████████▍                           | 6/10 [28:40<19:09, 287.30s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds:  70%|████████████████████████████████████████████████▎                    | 7/10 [33:29<14:23, 287.78s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds:  80%|███████████████████████████████████████████████████████▏             | 8/10 [38:17<09:35, 287.81s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds:  90%|██████████████████████████████████████████████████████████████       | 9/10 [43:02<04:46, 286.95s/fold]
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+
+/home/dunnkers/anaconda3/lib/python3.7/site-packages/joblib/externals/loky/process_executor.py:706: UserWarning: A worker stopped while some jobs were given to the executor. This can be caused by a too short worker timeout or by a memory leak.
+  "timeout or by a memory leak.", UserWarning
+ Testing 10 folds: 100%|████████████████████████████████████████████████████████████████████| 10/10 [47:47<00:00, 286.44s/fold]
+ Testing fold  10: 100%|████████████████████████████████████████████████████████████████████| 100/100 [04:45<00:00,  2.90s/img]
+Cache accuracies: [0.9667, 0.9469, 0.9397, 0.9366, 0.9293, 0.9386, 0.9292, 0.9417, 0.9476, 0.9514], mean = 0.9428
+Finished testing in 1:08:43.201939
