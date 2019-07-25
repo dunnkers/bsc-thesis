@@ -3,7 +3,7 @@ from os.path import exists, join
 
 import numpy as np
 from joblib import dump, load
-from matplotlib import pyplot
+from matplotlib import pyplot, gridspec
 from scipy import stats
 from skimage.io import imread, imshow
 
@@ -23,19 +23,26 @@ def plot_comparison():
     cachepath = './tested/cache_100x200/max_samples=200,folds=10,clf=SVM,output'
     out = imread(join(cachepath, GT_IMAGENAME + '1.png'))
 
+    fig, _ = pyplot.subplots(2, 2)
+    fig.set_figheight(7)
+    fig.subplots_adjust(wspace=0, hspace=0.2)
+
     # Plot images
     pyplot.subplot(2, 2, 1).set_title("Supervised")
-    imshow(sv)
+    pyplot.imshow(sv, cmap='gray')
     pyplot.subplot(2, 2, 2).set_title("Unsupervised")
-    imshow(usv)
+    pyplot.text(40, 125, 'contrast stretched', style='italic',
+        bbox={'facecolor':'white', 'alpha':0.5, 'pad':3}, fontsize=10,
+        color='white')
+    pyplot.imshow(usv, cmap='gray')
     pyplot.subplot(2, 2, 3).set_title("Groundtruth")
-    imshow(gt)
+    pyplot.imshow(gt)
     pyplot.subplot(2, 2, 4).set_title("Prediction")
-    imshow(out)
+    pyplot.imshow(out, cmap='gray')
     
     # Save
-    pyplot.tight_layout()
-    pyplot.savefig(join(VISUALS_FOLDERPATH, 'prediction-comparison.svg'))
+    fig.tight_layout()
+    fig.savefig(join(VISUALS_FOLDERPATH, 'prediction-comparison.svg'))
 
 
 def plot_gt_histogram():
@@ -132,6 +139,7 @@ def plot_boxplot():
 
     # 2- col plot
     fig, ax = pyplot.subplots(2, 1)
+    fig.set_figheight(7)
 
     # Violin plot
     ax_viol = pyplot.subplot(2, 1, 1)
@@ -143,6 +151,7 @@ def plot_boxplot():
         showmeans=True)
     ax_viol.set_xticks(np.arange(1, len(labels) + 1))
     ax_viol.set_xticklabels(labels)
+    ax_viol.set_yticks(np.arange(0, 1.1, step=0.1))
 
     # Accuracy distribution
     ax_hist = pyplot.subplot(2, 1, 2)
