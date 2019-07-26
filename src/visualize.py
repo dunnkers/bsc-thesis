@@ -64,42 +64,6 @@ def plot_prediction_img_comparison():
         .format(CONFIG_STR)), bbox_inches='tight')
 
 
-    return
-
-    fig, axes = pyplot.subplots(2, 2)
-    fig.set_figheight(8)
-    # fig.subplots_adjust(wspace=0, hspace=0.2)
-
-    # Plot images
-    # pyplot.subplot(2, 2, 1).set_title("Supervised")
-    axes[0, 0].set_title('Supervised')
-    axes[0, 0].imshow(sv, cmap='gray')
-    # pyplot.subplot(2, 2, 2).set_title("Unsupervised")
-    axes[0, 1].set_title('Unsupervised')
-    pyplot.text(40, 125, 'contrast stretched', style='italic',
-        bbox={'facecolor':'white', 'alpha':0.5, 'pad':3}, fontsize=10,
-        color='white')
-    axes[0, 1].imshow(usv, cmap='gray')
-    # pyplot.subplot(2, 2, 3).set_title("Groundtruth")
-    axes[1, 0].set_title('Groundtruth')
-    axes[1, 0].imshow(gt, cmap='gray')
-    # pyplot.subplot(2, 2, 4).set_title("Prediction")
-    axes[1, 1].set_title('Prediction')
-    axes[1, 1].imshow(out, cmap='gray')
-    
-    pyplot.text(4, 10, '{}'
-        .format(VISUALS_CONFIG_STR), fontsize=10, color='black')
-    pyplot.setp([a.get_xticklabels() for a in axes[0, :]], visible=False)
-    pyplot.setp([a.get_yticklabels() for a in axes[:, 1]], visible=False)
-    # Save
-    fig.suptitle('{} test performance'
-        .format(basename(impath)))
-    # fig.tight_layout(True)
-    fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=0.0)
-    fig.savefig(join(VISUALS_FOLDERPATH, '{}-comparison.svg'
-        .format(CONFIG_STR)))
-
-
 def plot_gt_histogram():
     """ Plot groundtruth image and its associated histogram. """
     # Read
