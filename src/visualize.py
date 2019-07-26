@@ -1,18 +1,18 @@
 #%%
-from os.path import exists, join, basename
+from os.path import basename, exists, join
 
 import numpy as np
 from joblib import dump, load
 from matplotlib import gridspec, pyplot
+from mpl_toolkits.axes_grid1 import ImageGrid
 from scipy import stats
 from skimage.color import rgb2gray
 from skimage.io import imread, imread_collection, imshow
 from skimage.util import img_as_bool, img_as_ubyte
 from tqdm.auto import tqdm
-from mpl_toolkits.axes_grid1 import ImageGrid
 
 from constants import (CACHES, CONFIG_STR, DATA_PATH, DUMP_TESTED,
-                       GT_DATA_GLOB, GT_FOLDERNAME, GT_IMAGENAME,
+                       GT_DATA_GLOB, GT_FOLDERNAME, GT_IMAGENAME, IMG_GLOB,
                        OUT_FOLDERNAME, SV_FOLDERNAME, SV_IMAGENAME,
                        USV_FOLDERNAME, USV_IMAGENAME, VISUALS_CONFIG_STR,
                        VISUALS_FOLDERPATH)
@@ -108,6 +108,8 @@ def plot_prediction_img_comparison(cachepath, imagename):
 
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-prediction-{}.svg'
         .format(CONFIG_STR, imagename)), bbox_inches='tight')
+    pyplot.close(fig)
+    pyplot.clf()
 
 
 def plot_gt_histogram():
@@ -131,6 +133,8 @@ def plot_gt_histogram():
     # Save
     fig.tight_layout()
     fig.savefig(join(VISUALS_FOLDERPATH, 'groundtruth-histogram.svg'))
+    pyplot.close(fig)
+    pyplot.clf()
 
 def plot_overall_performance():
     """ Compare cache performance by plotting several boxplots, resembling
@@ -186,6 +190,8 @@ def plot_overall_performance():
     fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-violinplot.svg'
         .format(CONFIG_STR)))
+    pyplot.close(fig)
+    pyplot.clf()
 
     ##### Histogram - accuracy distribution
     fig, ax = pyplot.subplots()
@@ -201,6 +207,8 @@ def plot_overall_performance():
     fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-histogram.svg'
         .format(CONFIG_STR)))
+    pyplot.close(fig)
+    pyplot.clf()
     
     ##### Boxplot with fold means
     fig, ax = pyplot.subplots()
@@ -214,11 +222,11 @@ def plot_overall_performance():
     fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-boxplot.svg'
         .format(CONFIG_STR)))
-
-# def plot_confusion_matrix():
+    pyplot.close(fig)
+    pyplot.clf()
 
 def plot_acc_vs_gt_fractions(cachepath):
-    gt  = imread_collection(join(cachepath, 'groundtruth/*.png'))
+    gt  = imread_collection(join(cachepath, GT_FOLDERNAME, IMG_GLOB))
     gt_fractions = []
     for i in tqdm(range(len(gt.files)), desc="Computing gt fractions"):
         gtimg = gt[i]
@@ -249,6 +257,8 @@ def plot_acc_vs_gt_fractions(cachepath):
     fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-scatterplot.svg'
         .format(CONFIG_STR)))
+    pyplot.close(fig)
+    pyplot.clf()
 
 plot_prediction_img_comparison('./cache_175x350', 'image1')
 plot_prediction_img_comparison('./cache_175x350', 'image618')
