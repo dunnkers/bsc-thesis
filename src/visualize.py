@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from joblib import dump, load
-from matplotlib import gridspec, pyplot
+from matplotlib import gridspec, pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
 from scipy import stats
 from skimage.color import rgb2gray
@@ -84,7 +84,7 @@ def plot_prediction_img_comparison(cachepath, imagename):
     h, w = gt.shape
 
     # Plot 2x2
-    fig = pyplot.figure(figsize=(7.0, 9.0))
+    fig = plt.figure(figsize=(7.0, 9.0))
     fig.suptitle('Prediction result')
 
     grid = ImageGrid(fig, (0.1, 0.1, 0.8, 0.8), 
@@ -112,8 +112,8 @@ def plot_prediction_img_comparison(cachepath, imagename):
 
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-prediction-{}.svg'
         .format(CONFIG_STR, imagename)), bbox_inches='tight')
-    pyplot.close(fig)
-    pyplot.clf()
+    plt.close(fig)
+    plt.clf()
 
 
 def plot_gt_histogram():
@@ -123,22 +123,22 @@ def plot_gt_histogram():
     im = imread(path, as_gray=True)
     
     # 2-col plot
-    fig, _ = pyplot.subplots(1, 2)
+    fig, _ = plt.subplots(1, 2)
 
     # Image
-    pyplot.subplot(1, 2, 1).set_title("Groundtruth image")
+    plt.subplot(1, 2, 1).set_title("Groundtruth image")
     imshow(im)
 
     # Histogram
-    ax_hist = pyplot.subplot(1, 2, 2)
+    ax_hist = plt.subplot(1, 2, 2)
     ax_hist.set_title("Histogram in 6-bit bins")
     ax_hist.hist(im.ravel(), bins=64, log=True)
     
     # Save
     fig.tight_layout()
     fig.savefig(join(VISUALS_FOLDERPATH, 'groundtruth-histogram.svg'))
-    pyplot.close(fig)
-    pyplot.clf()
+    plt.close(fig)
+    plt.clf()
 
 def compare_classifiers_performance():
     comparison_boxplot = []
@@ -171,18 +171,18 @@ def compare_classifiers_performance():
     sns.set(style="whitegrid")
     dataframe = pd.DataFrame(comparison_boxplot)
 
-    fig, (ax) = pyplot.subplots(1, 1)
+    fig, (ax) = plt.subplots(1, 1)
     ax = sns.boxplot(x="Cache", y="Accuracy", hue="Classifier",
         data=dataframe, palette="Set3")
     ax.set_title('{}-fold classifier performance'.format(N_FOLDS))
-    pyplot.xticks(rotation=30)
+    plt.xticks(rotation=30)
     ax.set(xlabel='Cache (width x height) in pixels',
            ylabel='Accuracy score')
     fig.tight_layout()
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-classifiers-performance.svg'
         .format(CONFIG_STR_NOCLF)))
-    pyplot.close(fig)
-    pyplot.clf()
+    plt.close(fig)
+    plt.clf()
 
 def plot_overall_performance():
     """ Compare cache performance by plotting several boxplots, resembling
@@ -223,7 +223,7 @@ def plot_overall_performance():
         return
 
     ##### Violin plot - accuracy performance & distribution
-    fig, ax = pyplot.subplots()
+    fig, ax = plt.subplots()
     ax.set_title('{}'
         .format(VISUALS_CONFIG_STR), fontsize=10)
     ax.set_xlabel('cache (width x height) in pixels')
@@ -238,11 +238,11 @@ def plot_overall_performance():
     fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-violinplot.svg'
         .format(CONFIG_STR)))
-    pyplot.close(fig)
-    pyplot.clf()
+    plt.close(fig)
+    plt.clf()
 
     ##### Histogram - accuracy distribution
-    fig, ax = pyplot.subplots()
+    fig, ax = plt.subplots()
     ax.set_title('{}'
         .format(VISUALS_CONFIG_STR), fontsize=10)
     ax.set_xlabel('Accuracy score')
@@ -255,11 +255,11 @@ def plot_overall_performance():
     fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-histogram.svg'
         .format(CONFIG_STR)))
-    pyplot.close(fig)
-    pyplot.clf()
+    plt.close(fig)
+    plt.clf()
     
     ##### Boxplot with fold means
-    fig, ax = pyplot.subplots()
+    fig, ax = plt.subplots()
     ax.set_xlabel('cache (width x height) in pixels')
     ax.set_ylabel('Accuracy score')
     ax.set_title('{}'
@@ -270,8 +270,8 @@ def plot_overall_performance():
     fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-boxplot.svg'
         .format(CONFIG_STR)))
-    pyplot.close(fig)
-    pyplot.clf()
+    plt.close(fig)
+    plt.clf()
 
 def plot_acc_vs_gt_fractions(cachepath):
     gt  = imread_collection(join(cachepath, GT_FOLDERNAME, IMG_GLOB))
@@ -293,7 +293,7 @@ def plot_acc_vs_gt_fractions(cachepath):
     
     ####### Accuracies
     gt_accs, _ = get_accuracy_map(cachepath)
-    fig, ax = pyplot.subplots()
+    fig, ax = plt.subplots()
     ax.scatter(gt_fractions, gt_accs, marker='.', alpha=0.3)
     ax.set_title('{}, cache={}x{}'
         .format(VISUALS_CONFIG_STR, w, h), fontsize=10)
@@ -305,50 +305,50 @@ def plot_acc_vs_gt_fractions(cachepath):
     fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-scatterplot.svg'
         .format(CONFIG_STR)))
-    pyplot.close(fig)
-    pyplot.clf()
+    plt.close(fig)
+    plt.clf()
 
 def plot_confusion_matrix(cm, w, h, target_names):
     """ Given a sklearn confusion matrix (cm), make a nice plot """
     accuracy = np.trace(cm) / float(np.sum(cm))
     misclass = 1 - accuracy
 
-    cmap = pyplot.get_cmap('Blues')
+    cmap = plt.get_cmap('Blues')
 
-    pyplot.figure(figsize=(6, 5))
-    pyplot.imshow(cm, interpolation='nearest', cmap=cmap)
-    pyplot.text(0.10, -0.7, 'Confusion matrix', fontsize=12)
-    pyplot.title('{}, cache={}x{}'
+    plt.figure(figsize=(6, 5))
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.text(0.10, -0.7, 'Confusion matrix', fontsize=12)
+    plt.title('{}, cache={}x{}'
         .format(VISUALS_CONFIG_STR, w, h), fontsize=10)
-    pyplot.colorbar()
+    plt.colorbar()
 
     if target_names is not None:
         tick_marks = np.arange(len(target_names))
-        pyplot.xticks(tick_marks, target_names)
-        pyplot.yticks(tick_marks, target_names, rotation=90)
+        plt.xticks(tick_marks, target_names)
+        plt.yticks(tick_marks, target_names, rotation=90)
 
     cm_norm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
 
     thresh = cm.max() / 1.5
     for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
-        pyplot.text(j, i, "{:0.4f}".format(cm_norm[i, j]),
+        plt.text(j, i, "{:0.4f}".format(cm_norm[i, j]),
                     horizontalalignment="center",
                     color="white" if cm[i, j] > thresh else "black",
                     fontsize=12)
-        pyplot.text(j, i + 0.1, "Pixels: {:,}".format(cm[i, j]),
+        plt.text(j, i + 0.1, "Pixels: {:,}".format(cm[i, j]),
                     horizontalalignment="center",
                     color="white" if cm[i, j] > thresh else "black",
                     fontsize=10)
 
-    pyplot.ylabel('True label')
-    pyplot.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'
             .format(accuracy, misclass))
-    pyplot.tight_layout()
-    # pyplot.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=0.1)
-    pyplot.savefig(join(VISUALS_FOLDERPATH, '{}-confusion-matrix.svg'
+    plt.tight_layout()
+    # plt.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=0.1)
+    plt.savefig(join(VISUALS_FOLDERPATH, '{}-confusion-matrix.svg'
         .format(CONFIG_STR)))
-    pyplot.clf()
+    plt.clf()
 
 def compute_and_plot_confusion_matrix(cachepath):
     print('Computing confusion matrix...')
@@ -366,7 +366,7 @@ def compute_and_plot_confusion_matrix(cachepath):
 
     # Plot non-normalized confusion matrix
     plot_confusion_matrix(cm, w, h, target_names=class_names)
-    pyplot.show()
+    plt.show()
 
 
 
