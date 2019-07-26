@@ -120,37 +120,45 @@ def plot_overall_performance():
     ##### Violin plot - accuracy performance & distribution
     fig, ax = pyplot.subplots()
     ax.set_title('{}'
-        .format(VISUALS_CONFIG_STR))
-    ax.set_xlabel('(width x height) in pixels')
+        .format(VISUALS_CONFIG_STR), fontsize=10)
+    ax.set_xlabel('cache (width x height) in pixels')
     ax.set_ylabel('Accuracy score')
     ax.violinplot(per_cache_accuracies,
         showmeans=True)
     ax.set_xticks(np.arange(1, len(labels) + 1))
-    fig.autofmt_xdate()
     ax.set_xticklabels(labels)
     ax.set_yticks(np.arange(0, 1.1, step=0.1))
+    fig.autofmt_xdate()
+    fig.suptitle('        Per-cache test performance')
+    fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-violinplot.svg'
         .format(CONFIG_STR)))
 
     ##### Histogram - accuracy distribution
     fig, ax = pyplot.subplots()
-    ax.set_title("Accuracy score distribution")
-    _, x, _ = ax.hist(all_accuracies, bins=32, density=True, log=True)
+    ax.set_title('{}'
+        .format(VISUALS_CONFIG_STR), fontsize=10)
+    ax.set_xlabel('Accuracy score')
+    ax.set_ylabel('Frequency (log)')
+    _, x, _ = ax.hist(all_accuracies, bins=64, density=True, log=True)
     density = stats.gaussian_kde(all_accuracies)
+    ax.set_xticks(np.arange(0, 1.1, step=0.1)) # @FIXME ticks with 0.1 steps
     ax.plot(x, density(x))
-    # ax.set_xticks(np.arange(1, 1.1, step=0.1)) # @FIXME ticks with 0.1 steps
-    fig.tight_layout()
+    fig.suptitle('            Accuracy score distribution')
+    fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-histogram.svg'
         .format(CONFIG_STR)))
     
     ##### Boxplot with fold means
     fig, ax = pyplot.subplots()
-    ax.set_xlabel('(width x height) in pixels')
+    ax.set_xlabel('cache (width x height) in pixels')
     ax.set_ylabel('Accuracy score')
     ax.set_title('{}'
-        .format(VISUALS_CONFIG_STR))
-    fig.autofmt_xdate()
+        .format(VISUALS_CONFIG_STR), fontsize=10)
     ax.boxplot(per_cache_means, labels=labels)
+    fig.autofmt_xdate()
+    fig.suptitle('           Per-cache folds mean test performance')
+    fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-boxplot.svg'
         .format(CONFIG_STR)))
 
@@ -194,11 +202,14 @@ def plot_acc_vs_gt_fractions():
 
     fig, ax = pyplot.subplots()
     ax.scatter(gt_fractions, gt_accs, marker='.', alpha=0.3)
-    ax.set_title('Accuracy score vs. fraction of pixels of type road marking')
+    ax.set_title('{}'
+        .format(VISUALS_CONFIG_STR), fontsize=10)
     ax.set_xlabel('Fraction of pixels of type road marking')
     ax.set_ylabel('Accuracy score')
 
     # Save
+    fig.suptitle('         Accuracy score vs. fraction of pixels of type road marking')
+    fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-scatterplot.svg'
         .format(CONFIG_STR)))
 
