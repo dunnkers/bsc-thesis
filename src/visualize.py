@@ -1,7 +1,10 @@
 #%%
+from itertools import product
 from os.path import basename, exists, join
 
 import numpy as np
+import pandas as pd
+import seaborn as sns
 from joblib import dump, load
 from matplotlib import gridspec, pyplot
 from mpl_toolkits.axes_grid1 import ImageGrid
@@ -11,13 +14,12 @@ from skimage.io import imread, imread_collection, imshow
 from skimage.util import img_as_bool, img_as_ubyte
 from sklearn.metrics import confusion_matrix
 from tqdm.auto import tqdm
-from itertools import product
 
-from constants import (CACHES, CONFIG_STR, DATA_PATH, DUMP_TESTED,
-                       GT_DATA_GLOB, GT_FOLDERNAME, GT_IMAGENAME, IMG_GLOB,
-                       OUT_FOLDERNAME, SV_FOLDERNAME, SV_IMAGENAME,
-                       USV_FOLDERNAME, USV_IMAGENAME, VISUALS_CONFIG_STR,
-                       VISUALS_FOLDERPATH)
+from constants import (CACHES, CONFIG_STR, CONFIG_STR_NOCLF, DATA_PATH,
+                       DUMP_TESTED, GT_DATA_GLOB, GT_FOLDERNAME, GT_IMAGENAME,
+                       IMG_GLOB, N_FOLDS, OUT_FOLDERNAME, SV_FOLDERNAME,
+                       SV_IMAGENAME, USV_FOLDERNAME, USV_IMAGENAME,
+                       VISUALS_CONFIG_STR, VISUALS_FOLDERPATH)
 
 
 def get_accuracy_map(cachepath):
@@ -135,6 +137,50 @@ def plot_gt_histogram():
     # Save
     fig.tight_layout()
     fig.savefig(join(VISUALS_FOLDERPATH, 'groundtruth-histogram.svg'))
+    pyplot.close(fig)
+    pyplot.clf()
+
+def compare_classifiers_performance():
+    comparison_boxplot = []
+
+    for cache in CACHES:
+        cachepath = cache.path.replace('./', './tested/')
+        h, w = cache.shape
+        cachelabel = '{}x{}'.format(w, h)
+
+        clfs = ['SVM', 'XGBoost']
+        for clf in clfs:
+            dump_tested = '{},clf={},tested.joblib'.format(
+                    CONFIG_STR_NOCLF, clf)
+            path = join(cachepath, dump_tested)
+            if exists(path): # skip when cache not tested yet.
+                # Load data from dumpfile
+                folded_dataset = load(path)
+                folds = folded_dataset['folds']
+                
+                for fold in folds:
+                    fold_accuracies = fold['accuracies']
+                    fold_acc = np.mean(fold_accuracies)
+                    comparison_boxplot.append(dict(
+                        Accuracy=fold_acc,
+                        Classifier=clf,
+                        Cache=cachelabel
+                    ))
+
+    ##### Seaborn plot
+    sns.set(style="whitegrid")
+    dataframe = pd.DataFrame(comparison_boxplot)
+
+    fig, (ax) = pyplot.subplots(1, 1)
+    ax = sns.boxplot(x="Cache", y="Accuracy", hue="Classifier",
+        data=dataframe, palette="Set3")
+    ax.set_title('{}-fold classifier performance'.format(N_FOLDS))
+    pyplot.xticks(rotation=30)
+    ax.set(xlabel='Cache (width x height) in pixels',
+           ylabel='Accuracy score')
+    fig.tight_layout()
+    fig.savefig(join(VISUALS_FOLDERPATH, '{}-classifiers-performance.svg'
+        .format(CONFIG_STR_NOCLF)))
     pyplot.close(fig)
     pyplot.clf()
 
@@ -324,8 +370,6 @@ def compute_and_plot_confusion_matrix(cachepath):
 
 
 
-
-
 plot_prediction_img_comparison('./cache_175x350', 'image1')
 plot_prediction_img_comparison('./cache_175x350', 'image618')
 plot_prediction_img_comparison('./cache_175x350', 'image633')
@@ -351,5 +395,6 @@ plot_prediction_img_comparison('./cache_175x350', 'image290')
 
 plot_gt_histogram()
 plot_overall_performance()
-plot_acc_vs_gt_fractions('./cache_175x350')
+plot_acc_vs_gt_fractions('./cache_100x200')
 compute_and_plot_confusion_matrix('./cache_175x350')
+compare_classifiers_performance()
