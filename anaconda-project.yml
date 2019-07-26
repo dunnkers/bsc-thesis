@@ -73,6 +73,8 @@ packages:
 - scikit-learn
 - scikit-image
 - joblib
+- seaborn
+- pandas
 - pip:
   - fire
   - xgboost
