@@ -9,7 +9,9 @@ from scipy import stats
 from skimage.color import rgb2gray
 from skimage.io import imread, imread_collection, imshow
 from skimage.util import img_as_bool, img_as_ubyte
+from sklearn.metrics import confusion_matrix
 from tqdm.auto import tqdm
+from itertools import product
 
 from constants import (CACHES, CONFIG_STR, DATA_PATH, DUMP_TESTED,
                        GT_DATA_GLOB, GT_FOLDERNAME, GT_IMAGENAME, IMG_GLOB,
@@ -260,29 +262,129 @@ def plot_acc_vs_gt_fractions(cachepath):
     pyplot.close(fig)
     pyplot.clf()
 
-plot_prediction_img_comparison('./cache_175x350', 'image1')
-plot_prediction_img_comparison('./cache_175x350', 'image618')
-plot_prediction_img_comparison('./cache_175x350', 'image633')
-plot_prediction_img_comparison('./cache_175x350', 'image924')
+def plot_confusion_matrix(cm, target_names, title='Confusion matrix'):
+    """ Given a sklearn confusion matrix (cm), make a nice plot """
+    accuracy = np.trace(cm) / float(np.sum(cm))
+    misclass = 1 - accuracy
 
-# Low performance
-plot_prediction_img_comparison('./cache_175x350', 'image752')
-plot_prediction_img_comparison('./cache_175x350', 'image867')
-plot_prediction_img_comparison('./cache_175x350', 'image927')
-plot_prediction_img_comparison('./cache_175x350', 'image928')
+    cmap = pyplot.get_cmap('Blues')
 
-# High performance
-plot_prediction_img_comparison('./cache_175x350', 'image633')
-plot_prediction_img_comparison('./cache_175x350', 'image623')
-plot_prediction_img_comparison('./cache_175x350', 'image632')
-plot_prediction_img_comparison('./cache_175x350', 'image849')
-plot_prediction_img_comparison('./cache_175x350', 'image299')
-plot_prediction_img_comparison('./cache_175x350', 'image846')
-plot_prediction_img_comparison('./cache_175x350', 'image628')
-plot_prediction_img_comparison('./cache_175x350', 'image291')
-plot_prediction_img_comparison('./cache_175x350', 'image284')
-plot_prediction_img_comparison('./cache_175x350', 'image290')
+    pyplot.figure(figsize=(8, 6))
+    pyplot.imshow(cm, interpolation='nearest', cmap=cmap)
+    pyplot.title(title)
+    pyplot.colorbar()
 
-plot_gt_histogram()
-plot_overall_performance()
-plot_acc_vs_gt_fractions('./cache_175x350')
+    if target_names is not None:
+        tick_marks = np.arange(len(target_names))
+        pyplot.xticks(tick_marks, target_names)
+        pyplot.yticks(tick_marks, target_names, rotation=90)
+
+    cm_norm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+
+    thresh = cm.max() / 1.5
+    for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
+        pyplot.text(j, i, "{:0.4f}".format(cm_norm[i, j]),
+                    horizontalalignment="center",
+                    color="white" if cm[i, j] > thresh else "black",
+                    fontsize=12)
+        pyplot.text(j, i + 0.075, "Pixels: {:,}".format(cm[i, j]),
+                    horizontalalignment="center",
+                    color="white" if cm[i, j] > thresh else "black",
+                    fontsize=10)
+
+    pyplot.tight_layout()
+    pyplot.ylabel('True label')
+    pyplot.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'
+            .format(accuracy, misclass))
+    pyplot.savefig(join(VISUALS_FOLDERPATH, '{}-confusion-matrix.svg'
+        .format(CONFIG_STR)))
+    # pyplot.clf()
+
+# def plot_confusion_matrix(cm, classes):
+#     title = 'Normalized confusion matrix'
+
+#     # cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+#     print(cm)
+
+#     fig, ax = pyplot.subplots()
+#     im = ax.imshow(cm, interpolation='nearest')
+#     ax.figure.colorbar(im, ax=ax)
+#     # We want to show all ticks...
+#     ax.set(xticks=np.arange(cm.shape[1]),
+#         yticks=np.arange(cm.shape[0]),
+#         # ... and label them with the respective list entries
+#         xticklabels=classes, yticklabels=classes,
+#         title=title,
+#         ylabel='True label',
+#         xlabel='Predicted label')
+
+#     # Rotate the tick labels and set their alignment.
+#     pyplot.setp(ax.get_xticklabels(), rotation=45, ha="right",
+#             rotation_mode="anchor")
+
+#     # Loop over data dimensions and create text annotations.
+#     fmt = '.2f'
+#     thresh = cm.max() / 2.
+#     for i in range(cm.shape[0]):
+#         for j in range(cm.shape[1]):
+#             ax.text(j, i, format(cm[i, j], fmt),
+#                     ha="center", va="center",
+#                     color="white" if cm[i, j] > thresh else "black")
+#     fig.tight_layout()
+#     return ax
+
+
+
+def compute_and_plot_confusion_matrix(cachepath):
+    print('Computing confusion matrix...')
+    # gt  = imread_collection(join(cachepath, GT_FOLDERNAME, IMG_GLOB))
+    # out = imread_collection(join(cachepath, OUT_FOLDERNAME, IMG_GLOB))
+    # y_true = np.array(gt).ravel()
+    # y_pred = np.array(out).ravel()
+    # cm = confusion_matrix(y_true, y_pred).ravel() # cm = tn, fp, fn, tp
+    cm = np.array([[55938320,  3327284],   [294897,  1689499]])
+    class_names = ['Non-road marker', 'Road marker']
+    print('Confusion matrix computed.')
+
+    np.set_printoptions(precision=2)
+
+    # Plot non-normalized confusion matrix
+    plot_confusion_matrix(cm, target_names=class_names)
+
+    # # Plot normalized confusion matrix
+    # plot_confusion_matrix(cm, target_names=class_names, normalize=True)
+    pyplot.show()
+
+
+
+
+
+# plot_prediction_img_comparison('./cache_175x350', 'image1')
+# plot_prediction_img_comparison('./cache_175x350', 'image618')
+# plot_prediction_img_comparison('./cache_175x350', 'image633')
+# plot_prediction_img_comparison('./cache_175x350', 'image924')
+
+# # Low performance
+# plot_prediction_img_comparison('./cache_175x350', 'image752')
+# plot_prediction_img_comparison('./cache_175x350', 'image867')
+# plot_prediction_img_comparison('./cache_175x350', 'image927')
+# plot_prediction_img_comparison('./cache_175x350', 'image928')
+
+# # High performance
+# plot_prediction_img_comparison('./cache_175x350', 'image633')
+# plot_prediction_img_comparison('./cache_175x350', 'image623')
+# plot_prediction_img_comparison('./cache_175x350', 'image632')
+# plot_prediction_img_comparison('./cache_175x350', 'image849')
+# plot_prediction_img_comparison('./cache_175x350', 'image299')
+# plot_prediction_img_comparison('./cache_175x350', 'image846')
+# plot_prediction_img_comparison('./cache_175x350', 'image628')
+# plot_prediction_img_comparison('./cache_175x350', 'image291')
+# plot_prediction_img_comparison('./cache_175x350', 'image284')
+# plot_prediction_img_comparison('./cache_175x350', 'image290')
+
+# plot_gt_histogram()
+# plot_overall_performance()
+# plot_acc_vs_gt_fractions('./cache_175x350')
+compute_and_plot_confusion_matrix('./cache_175x350')
