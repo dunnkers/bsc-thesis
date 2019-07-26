@@ -1,51 +1,105 @@
 #%%
-from os.path import exists, join
+from os.path import exists, join, basename
 
 import numpy as np
 from joblib import dump, load
-from matplotlib import pyplot, gridspec
+from matplotlib import gridspec, pyplot
 from scipy import stats
-from skimage.io import imread, imshow, imread_collection
 from skimage.color import rgb2gray
+from skimage.io import imread, imread_collection, imshow
 from skimage.util import img_as_bool, img_as_ubyte
 from tqdm.auto import tqdm
+from mpl_toolkits.axes_grid1 import ImageGrid
 
-from constants import (CACHES, DATA_PATH, DUMP_TESTED, GT_FOLDERNAME,
-                       GT_IMAGENAME, OUT_FOLDERNAME, SV_FOLDERNAME,
-                       SV_IMAGENAME, USV_FOLDERNAME, USV_IMAGENAME,
-                       VISUALS_FOLDERPATH, GT_DATA_GLOB)
+from constants import (CACHES, CONFIG_STR, DATA_PATH, DUMP_TESTED,
+                       GT_DATA_GLOB, GT_FOLDERNAME, GT_IMAGENAME,
+                       OUT_FOLDERNAME, SV_FOLDERNAME, SV_IMAGENAME,
+                       USV_FOLDERNAME, USV_IMAGENAME, VISUALS_CONFIG_STR,
+                       VISUALS_FOLDERPATH)
 
 
 def plot_prediction_img_comparison():
     """ Plot comparison chart between groundtruth, supervised, unsupervised-
         and the prediction. """
-    # Read images
-    gt = imread(join(DATA_PATH, GT_FOLDERNAME, GT_IMAGENAME + '1.png'))
-    sv = imread(join(DATA_PATH, SV_FOLDERNAME, SV_IMAGENAME + '1.png'))
-    usv = imread(join(DATA_PATH, USV_FOLDERNAME, USV_IMAGENAME + '1.png'))
-    cachepath = './tested/cache_100x200/max_samples=200,folds=10,clf=SVM,output'
-    out = imread(join(cachepath, GT_IMAGENAME + '1.png'))
-
-    fig, _ = pyplot.subplots(2, 2)
-    fig.set_figheight(7)
-    fig.subplots_adjust(wspace=0, hspace=0.2)
-
-    # Plot images
-    pyplot.subplot(2, 2, 1).set_title("Supervised")
-    pyplot.imshow(sv, cmap='gray')
-    pyplot.subplot(2, 2, 2).set_title("Unsupervised")
-    pyplot.text(40, 125, 'contrast stretched', style='italic',
-        bbox={'facecolor':'white', 'alpha':0.5, 'pad':3}, fontsize=10,
-        color='white')
-    pyplot.imshow(usv, cmap='gray')
-    pyplot.subplot(2, 2, 3).set_title("Groundtruth")
-    pyplot.imshow(gt)
-    pyplot.subplot(2, 2, 4).set_title("Prediction")
-    pyplot.imshow(out, cmap='gray')
+    cachepath = './cache_140x280'
     
-    # Save
-    fig.tight_layout()
-    fig.savefig(join(VISUALS_FOLDERPATH, 'prediction-comparison.svg'))
+    # Image paths
+    gtpath  = join(cachepath, GT_FOLDERNAME, GT_IMAGENAME + '1.png')
+    svpath  = gtpath.replace(
+            GT_FOLDERNAME, SV_FOLDERNAME).replace(GT_IMAGENAME, SV_IMAGENAME)
+    usvpath = gtpath.replace(
+            GT_FOLDERNAME, USV_FOLDERNAME).replace(GT_IMAGENAME, USV_IMAGENAME)
+    outpath = gtpath.replace(
+            './', './tested/').replace(GT_FOLDERNAME, OUT_FOLDERNAME)
+
+    # Skip when not tested yet
+    if not exists(outpath):
+        return
+
+    # Read images
+    gt  = imread(gtpath)
+    sv  = imread(svpath)
+    usv = imread(usvpath)
+    out = imread(outpath)
+
+    ### Find accuracy
+    # Load test dumpfile
+    dumppath = join(cachepath.replace('./', './tested/'), DUMP_TESTED)
+    if not exists(dumppath): # Cache not tested yet.
+        return
+    folded_dataset = load(dumppath)
+
+    # Find accuracy in folds
+    folds = folded_dataset['folds']
+    gt_files = folded_dataset['gt_files']
+
+    for fold in folds:
+        accuracies = fold['accuracies']
+        test_indexes = fold['test_indexes']
+
+        for i in range(len(test_indexes)):
+            accuracy = accuracies[i]
+            test_index = test_indexes[i]
+            if gt_files[test_index] == gtpath:
+                acc = accuracy
+                break
+
+        # Break once found
+        if 'acc' in locals():
+            break
+
+    # Size
+    h, w = gt.shape
+
+    # Plot 2x2
+    fig = pyplot.figure(figsize=(7.0, 9.0))
+    fig.suptitle('Prediction result')
+
+    grid = ImageGrid(fig, (0.1, 0.1, 0.8, 0.8), 
+        nrows_ncols=(2, 2), axes_pad=(0.15, 0.5), label_mode="L", aspect=True)
+    grid[0].set_title('Supervised')
+    grid[0].imshow(sv, cmap='gray')
+
+    grid[1].set_title('Unsupervised')
+    grid[1].imshow(usv, cmap='gray')
+
+    grid[2].set_title('Groundtruth')
+    grid[2].imshow(gt, cmap='gray')
+
+    grid[3].set_title('Prediction')
+    grid[3].imshow(out, cmap='gray')
+
+    fig.text(0.218, 0.945, '{}, cache={}x{}, im={}'
+        .format(VISUALS_CONFIG_STR, w, h, basename(outpath)), fontsize=10)
+
+    fig.text(0.54, 0.88, 'contrast stretched', fontsize=10, color='white',
+        bbox={'facecolor':'white', 'alpha':0.5, 'pad':2})
+
+    fig.text(0.56, 0.45, 'acc = {:.4f}'.format(acc), fontsize=10, color='white',
+        bbox={'facecolor':'white', 'alpha':0.5, 'pad':2})
+
+    fig.savefig(join(VISUALS_FOLDERPATH, '{}-comparison.svg'
+        .format(CONFIG_STR)), bbox_inches='tight')
 
 
 def plot_gt_histogram():
@@ -55,7 +109,7 @@ def plot_gt_histogram():
     im = imread(path, as_gray=True)
     
     # 2-col plot
-    fig, ax = pyplot.subplots(1, 2)
+    fig, _ = pyplot.subplots(1, 2)
 
     # Image
     pyplot.subplot(1, 2, 1).set_title("Groundtruth image")
@@ -108,43 +162,50 @@ def plot_overall_performance():
         print('No boxplot plotted! - no data for current config found!')
         return
 
-    ##### 2- row plot of accuracy distribution
-    fig, ax = pyplot.subplots(2, 1)
-    fig.set_figheight(7)
-    # (1) Violin plot
-    ax_viol = pyplot.subplot(2, 1, 1)
-    ax_viol.set_title('Results for {}'.format(OUT_FOLDERNAME))
-    ax_viol.set_xlabel('(width x height) in pixels')
-    ax_viol.set_ylabel('Accuracy score')
-
-    ax_viol.violinplot(per_cache_accuracies,
+    ##### Violin plot - accuracy performance & distribution
+    fig, ax = pyplot.subplots()
+    ax.set_title('{}'
+        .format(VISUALS_CONFIG_STR), fontsize=10)
+    ax.set_xlabel('cache (width x height) in pixels')
+    ax.set_ylabel('Accuracy score')
+    ax.violinplot(per_cache_accuracies,
         showmeans=True)
-    ax_viol.set_xticks(np.arange(1, len(labels) + 1))
-    ax_viol.set_xticklabels(labels)
-    ax_viol.set_yticks(np.arange(0, 1.1, step=0.1))
+    ax.set_xticks(np.arange(1, len(labels) + 1))
+    ax.set_xticklabels(labels)
+    ax.set_yticks(np.arange(0, 1.1, step=0.1))
+    fig.autofmt_xdate()
+    fig.suptitle('        Per-cache test performance')
+    fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
+    fig.savefig(join(VISUALS_FOLDERPATH, '{}-violinplot.svg'
+        .format(CONFIG_STR)))
 
-    # (2) Accuracy distribution
-    ax_hist = pyplot.subplot(2, 1, 2)
-    ax_hist.set_title("Accuracy score distribution")
-    _, x, _ = ax_hist.hist(all_accuracies, bins=32, density=True, log=True)
+    ##### Histogram - accuracy distribution
+    fig, ax = pyplot.subplots()
+    ax.set_title('{}'
+        .format(VISUALS_CONFIG_STR), fontsize=10)
+    ax.set_xlabel('Accuracy score')
+    ax.set_ylabel('Frequency (log)')
+    _, x, _ = ax.hist(all_accuracies, bins=64, density=True, log=True)
     density = stats.gaussian_kde(all_accuracies)
-    ax_hist.plot(x, density(x))
-
-    # Save
-    fig.tight_layout()
-    fig.savefig(join(VISUALS_FOLDERPATH, '{}-accuracy-distribution.svg'
-        .format(OUT_FOLDERNAME)))
+    ax.set_xticks(np.arange(0, 1.1, step=0.1)) # @FIXME ticks with 0.1 steps
+    ax.plot(x, density(x))
+    fig.suptitle('            Accuracy score distribution')
+    fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
+    fig.savefig(join(VISUALS_FOLDERPATH, '{}-histogram.svg'
+        .format(CONFIG_STR)))
     
     ##### Boxplot with fold means
     fig, ax = pyplot.subplots()
-    ax.set_xlabel('(width x height) in pixels')
+    ax.set_xlabel('cache (width x height) in pixels')
     ax.set_ylabel('Accuracy score')
-    ax.set_title('Results for {}'.format(OUT_FOLDERNAME))
+    ax.set_title('{}'
+        .format(VISUALS_CONFIG_STR), fontsize=10)
     ax.boxplot(per_cache_means, labels=labels)
-
-    # Save
+    fig.autofmt_xdate()
+    fig.suptitle('           Per-cache folds mean test performance')
+    fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-boxplot.svg'
-        .format(OUT_FOLDERNAME)))
+        .format(CONFIG_STR)))
 
 # def plot_confusion_matrix():
 
@@ -186,13 +247,16 @@ def plot_acc_vs_gt_fractions():
 
     fig, ax = pyplot.subplots()
     ax.scatter(gt_fractions, gt_accs, marker='.', alpha=0.3)
-    ax.set_title('Accuracy score vs. fraction of road marker pixels in image')
-    ax.set_xlabel('Fraction of road marker pixels in image')
+    ax.set_title('{}'
+        .format(VISUALS_CONFIG_STR), fontsize=10)
+    ax.set_xlabel('Fraction of pixels of type road marking')
     ax.set_ylabel('Accuracy score')
 
     # Save
-    fig.savefig(join(VISUALS_FOLDERPATH, '{}-acc_vs_gt_fractions.svg'
-        .format(OUT_FOLDERNAME)))
+    fig.suptitle('         Accuracy score vs. fraction of pixels of type road marking')
+    fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
+    fig.savefig(join(VISUALS_FOLDERPATH, '{}-scatterplot.svg'
+        .format(CONFIG_STR)))
 
 plot_prediction_img_comparison()
 plot_gt_histogram()
