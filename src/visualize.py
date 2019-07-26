@@ -22,16 +22,51 @@ def plot_prediction_img_comparison():
     """ Plot comparison chart between groundtruth, supervised, unsupervised-
         and the prediction. """
     cachepath = './cache_140x280'
-    tested_path = cachepath.replace('./', './tested/')
-    impath = join(tested_path, OUT_FOLDERNAME, '{}1.png'.format(GT_IMAGENAME))
-    if not exists(impath): # skip when cache not tested yet.
+    
+    # Image paths
+    gtpath  = join(cachepath, GT_FOLDERNAME, GT_IMAGENAME + '1.png')
+    svpath  = gtpath.replace(
+            GT_FOLDERNAME, SV_FOLDERNAME).replace(GT_IMAGENAME, SV_IMAGENAME)
+    usvpath = gtpath.replace(
+            GT_FOLDERNAME, USV_FOLDERNAME).replace(GT_IMAGENAME, USV_IMAGENAME)
+    outpath = gtpath.replace(
+            './', './tested/').replace(GT_FOLDERNAME, OUT_FOLDERNAME)
+
+    # Skip when not tested yet
+    if not exists(outpath):
         return
 
     # Read images
-    gt = imread(join(cachepath, GT_FOLDERNAME, GT_IMAGENAME + '1.png'))
-    sv = imread(join(cachepath, SV_FOLDERNAME, SV_IMAGENAME + '1.png'))
-    usv = imread(join(cachepath, USV_FOLDERNAME, USV_IMAGENAME + '1.png'))
-    out = imread(impath)
+    gt  = imread(gtpath)
+    sv  = imread(svpath)
+    usv = imread(usvpath)
+    out = imread(outpath)
+
+    ### Find accuracy
+    # Load test dumpfile
+    dumppath = join(cachepath.replace('./', './tested/'), DUMP_TESTED)
+    if not exists(dumppath): # Cache not tested yet.
+        return
+    folded_dataset = load(dumppath)
+
+    # Find accuracy in folds
+    folds = folded_dataset['folds']
+    gt_files = folded_dataset['gt_files']
+
+    for fold in folds:
+        accuracies = fold['accuracies']
+        test_indexes = fold['test_indexes']
+
+        for i in range(len(test_indexes)):
+            accuracy = accuracies[i]
+            test_index = test_indexes[i]
+            if gt_files[test_index] == gtpath:
+                acc = accuracy
+                break
+
+        # Break once found
+        if 'acc' in locals():
+            break
 
     # Size
     h, w = gt.shape
@@ -55,9 +90,12 @@ def plot_prediction_img_comparison():
     grid[3].imshow(out, cmap='gray')
 
     fig.text(0.218, 0.945, '{}, cache={}x{}, im={}'
-        .format(VISUALS_CONFIG_STR, w, h, basename(impath)), fontsize=10)
+        .format(VISUALS_CONFIG_STR, w, h, basename(outpath)), fontsize=10)
 
     fig.text(0.54, 0.88, 'contrast stretched', fontsize=10, color='white',
+        bbox={'facecolor':'white', 'alpha':0.5, 'pad':2})
+
+    fig.text(0.56, 0.45, 'acc = {:.4f}'.format(acc), fontsize=10, color='white',
         bbox={'facecolor':'white', 'alpha':0.5, 'pad':2})
 
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-comparison.svg'
@@ -221,6 +259,6 @@ def plot_acc_vs_gt_fractions():
         .format(CONFIG_STR)))
 
 plot_prediction_img_comparison()
-# plot_gt_histogram()
-# plot_overall_performance()
-# plot_acc_vs_gt_fractions()
+plot_gt_histogram()
+plot_overall_performance()
+plot_acc_vs_gt_fractions()
