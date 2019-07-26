@@ -1,5 +1,5 @@
 #%%
-from os.path import exists, join
+from os.path import exists, join, basename
 
 import numpy as np
 from joblib import dump, load
@@ -9,6 +9,7 @@ from skimage.color import rgb2gray
 from skimage.io import imread, imread_collection, imshow
 from skimage.util import img_as_bool, img_as_ubyte
 from tqdm.auto import tqdm
+from mpl_toolkits.axes_grid1 import ImageGrid
 
 from constants import (CACHES, CONFIG_STR, DATA_PATH, DUMP_TESTED,
                        GT_DATA_GLOB, GT_FOLDERNAME, GT_IMAGENAME,
@@ -21,38 +22,80 @@ def plot_prediction_img_comparison():
     """ Plot comparison chart between groundtruth, supervised, unsupervised-
         and the prediction. """
     cachepath = './cache_140x280'
-    cachepath = cachepath.replace('./', './tested/')
-    impath = join(cachepath, OUT_FOLDERNAME, '{}1.png'.format(GT_IMAGENAME))
+    tested_path = cachepath.replace('./', './tested/')
+    impath = join(tested_path, OUT_FOLDERNAME, '{}1.png'.format(GT_IMAGENAME))
     if not exists(impath): # skip when cache not tested yet.
         return
 
     # Read images
-    gt = imread(join(DATA_PATH, GT_FOLDERNAME, GT_IMAGENAME + '1.png'))
-    sv = imread(join(DATA_PATH, SV_FOLDERNAME, SV_IMAGENAME + '1.png'))
-    usv = imread(join(DATA_PATH, USV_FOLDERNAME, USV_IMAGENAME + '1.png'))
+    gt = imread(join(cachepath, GT_FOLDERNAME, GT_IMAGENAME + '1.png'))
+    sv = imread(join(cachepath, SV_FOLDERNAME, SV_IMAGENAME + '1.png'))
+    usv = imread(join(cachepath, USV_FOLDERNAME, USV_IMAGENAME + '1.png'))
     out = imread(impath)
 
-    fig, _ = pyplot.subplots(2, 2)
-    fig.set_figheight(7)
-    fig.subplots_adjust(wspace=0, hspace=0.2)
-    fig.suptitle('{}'
-        .format(VISUALS_CONFIG_STR))
+    # Size
+    h, w = gt.shape
+
+    # Plot 2x2
+    fig = pyplot.figure(figsize=(7.0, 9.0))
+    fig.suptitle('Prediction result')
+
+    grid = ImageGrid(fig, (0.1, 0.1, 0.8, 0.8), 
+        nrows_ncols=(2, 2), axes_pad=(0.15, 0.5), label_mode="L", aspect=True)
+    grid[0].set_title('Supervised')
+    grid[0].imshow(sv, cmap='gray')
+
+    grid[1].set_title('Unsupervised')
+    grid[1].imshow(usv, cmap='gray')
+
+    grid[2].set_title('Groundtruth')
+    grid[2].imshow(gt, cmap='gray')
+
+    grid[3].set_title('Prediction')
+    grid[3].imshow(out, cmap='gray')
+
+    fig.text(0.218, 0.945, '{}, cache={}x{}, im={}'
+        .format(VISUALS_CONFIG_STR, w, h, basename(impath)), fontsize=10)
+
+    fig.text(0.54, 0.88, 'contrast stretched', fontsize=10, color='white',
+        bbox={'facecolor':'white', 'alpha':0.5, 'pad':2})
+
+    fig.savefig(join(VISUALS_FOLDERPATH, '{}-comparison.svg'
+        .format(CONFIG_STR)), bbox_inches='tight')
+
+
+    return
+
+    fig, axes = pyplot.subplots(2, 2)
+    fig.set_figheight(8)
+    # fig.subplots_adjust(wspace=0, hspace=0.2)
 
     # Plot images
-    pyplot.subplot(2, 2, 1).set_title("Supervised")
-    pyplot.imshow(sv, cmap='gray')
-    pyplot.subplot(2, 2, 2).set_title("Unsupervised")
+    # pyplot.subplot(2, 2, 1).set_title("Supervised")
+    axes[0, 0].set_title('Supervised')
+    axes[0, 0].imshow(sv, cmap='gray')
+    # pyplot.subplot(2, 2, 2).set_title("Unsupervised")
+    axes[0, 1].set_title('Unsupervised')
     pyplot.text(40, 125, 'contrast stretched', style='italic',
         bbox={'facecolor':'white', 'alpha':0.5, 'pad':3}, fontsize=10,
         color='white')
-    pyplot.imshow(usv, cmap='gray')
-    pyplot.subplot(2, 2, 3).set_title("Groundtruth")
-    pyplot.imshow(gt)
-    pyplot.subplot(2, 2, 4).set_title("Prediction")
-    pyplot.imshow(out, cmap='gray')
+    axes[0, 1].imshow(usv, cmap='gray')
+    # pyplot.subplot(2, 2, 3).set_title("Groundtruth")
+    axes[1, 0].set_title('Groundtruth')
+    axes[1, 0].imshow(gt, cmap='gray')
+    # pyplot.subplot(2, 2, 4).set_title("Prediction")
+    axes[1, 1].set_title('Prediction')
+    axes[1, 1].imshow(out, cmap='gray')
     
+    pyplot.text(4, 10, '{}'
+        .format(VISUALS_CONFIG_STR), fontsize=10, color='black')
+    pyplot.setp([a.get_xticklabels() for a in axes[0, :]], visible=False)
+    pyplot.setp([a.get_yticklabels() for a in axes[:, 1]], visible=False)
     # Save
-    fig.tight_layout(rect=[0, 0.03, 1, 0.95], pad=0.1, w_pad=0.1, h_pad=1.0)
+    fig.suptitle('{} test performance'
+        .format(basename(impath)))
+    # fig.tight_layout(True)
+    fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=0.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-comparison.svg'
         .format(CONFIG_STR)))
 
@@ -214,6 +257,6 @@ def plot_acc_vs_gt_fractions():
         .format(CONFIG_STR)))
 
 plot_prediction_img_comparison()
-plot_gt_histogram()
-plot_overall_performance()
-plot_acc_vs_gt_fractions()
+# plot_gt_histogram()
+# plot_overall_performance()
+# plot_acc_vs_gt_fractions()
