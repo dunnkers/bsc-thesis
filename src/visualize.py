@@ -18,19 +18,46 @@ from constants import (CACHES, CONFIG_STR, DATA_PATH, DUMP_TESTED,
                        VISUALS_FOLDERPATH)
 
 
-def plot_prediction_img_comparison():
+def get_accuracy_map(cachepath):
+    """ Returns a 1-D map containing the accuracy scores of this cache, 
+        as according to its gt_files array. """
+    # Dumpfile path
+    cachepath_tested = cachepath.replace('./', './tested/')
+    path = join(cachepath_tested, DUMP_TESTED)
+    if not exists(path): # skip when cache not tested yet.
+        return []
+
+    # Load data from dumpfile
+    folded_dataset = load(path)
+    gt_files = folded_dataset['gt_files']
+    folds = folded_dataset['folds']
+    
+    # accuracy map
+    gt_accs = np.zeros(len(gt_files))
+
+    for fold in folds:
+        accuracies = fold['accuracies']
+        test_indexes = fold['test_indexes']
+
+        for i in range(len(test_indexes)):
+            gt_accs[test_indexes[i]] = accuracies[i]
+        
+    return (gt_accs, gt_files)
+
+def plot_prediction_img_comparison(cachepath, imagename):
     """ Plot comparison chart between groundtruth, supervised, unsupervised-
         and the prediction. """
-    cachepath = './cache_140x280'
+    imagefile = '{}.png'.format(imagename)
     
     # Image paths
-    gtpath  = join(cachepath, GT_FOLDERNAME, GT_IMAGENAME + '1.png')
+    gtpath  = join(cachepath, GT_FOLDERNAME, imagefile)
     svpath  = gtpath.replace(
             GT_FOLDERNAME, SV_FOLDERNAME).replace(GT_IMAGENAME, SV_IMAGENAME)
     usvpath = gtpath.replace(
             GT_FOLDERNAME, USV_FOLDERNAME).replace(GT_IMAGENAME, USV_IMAGENAME)
     outpath = gtpath.replace(
-            './', './tested/').replace(GT_FOLDERNAME, OUT_FOLDERNAME)
+            # './', './tested/').replace(
+                GT_FOLDERNAME, OUT_FOLDERNAME)
 
     # Skip when not tested yet
     if not exists(outpath):
@@ -43,29 +70,10 @@ def plot_prediction_img_comparison():
     out = imread(outpath)
 
     ### Find accuracy
-    # Load test dumpfile
-    dumppath = join(cachepath.replace('./', './tested/'), DUMP_TESTED)
-    if not exists(dumppath): # Cache not tested yet.
-        return
-    folded_dataset = load(dumppath)
-
-    # Find accuracy in folds
-    folds = folded_dataset['folds']
-    gt_files = folded_dataset['gt_files']
-
-    for fold in folds:
-        accuracies = fold['accuracies']
-        test_indexes = fold['test_indexes']
-
-        for i in range(len(test_indexes)):
-            accuracy = accuracies[i]
-            test_index = test_indexes[i]
-            if gt_files[test_index] == gtpath:
-                acc = accuracy
-                break
-
-        # Break once found
-        if 'acc' in locals():
+    acc_map = get_accuracy_map(cachepath)
+    for gt_acc, gt_file in zip(*acc_map):
+        if gt_file == gtpath: # file found
+            acc = gt_acc
             break
 
     # Size
@@ -89,17 +97,17 @@ def plot_prediction_img_comparison():
     grid[3].set_title('Prediction')
     grid[3].imshow(out, cmap='gray')
 
-    fig.text(0.218, 0.945, '{}, cache={}x{}, im={}'
-        .format(VISUALS_CONFIG_STR, w, h, basename(outpath)), fontsize=10)
+    fig.text(0.193, 0.945, '{}, cache={}x{}, im={}'
+        .format(VISUALS_CONFIG_STR, w, h, imagename), fontsize=10)
 
     fig.text(0.54, 0.88, 'contrast stretched', fontsize=10, color='white',
         bbox={'facecolor':'white', 'alpha':0.5, 'pad':2})
 
-    fig.text(0.56, 0.45, 'acc = {:.4f}'.format(acc), fontsize=10, color='white',
-        bbox={'facecolor':'white', 'alpha':0.5, 'pad':2})
+    fig.text(0.53, 0.45, 'accuracy = {:.4f}'.format(acc), fontsize=11, color='white',
+        bbox={'facecolor':'black', 'alpha':0.7, 'pad':2})
 
-    fig.savefig(join(VISUALS_FOLDERPATH, '{}-comparison.svg'
-        .format(CONFIG_STR)), bbox_inches='tight')
+    fig.savefig(join(VISUALS_FOLDERPATH, '{}-prediction-{}.svg'
+        .format(CONFIG_STR, imagename)), bbox_inches='tight')
 
 
 def plot_gt_histogram():
@@ -209,8 +217,7 @@ def plot_overall_performance():
 
 # def plot_confusion_matrix():
 
-def plot_acc_vs_gt_fractions():
-    cachepath = './cache_140x280'
+def plot_acc_vs_gt_fractions(cachepath):
     gt  = imread_collection(join(cachepath, 'groundtruth/*.png'))
     gt_fractions = []
     for i in tqdm(range(len(gt.files)), desc="Computing gt fractions"):
@@ -224,31 +231,16 @@ def plot_acc_vs_gt_fractions():
             road, road_marker = counts
             fraction = road_marker / road
         gt_fractions.append(fraction)
+
+    # Size
+    h, w = gt[0].shape
     
     ####### Accuracies
-    gt_accs = np.zeros(len(gt.files))
-
-    cachepath_tested = cachepath.replace('./', './tested/')
-    path = join(cachepath_tested, DUMP_TESTED)
-    if not exists(path): # skip when cache not tested yet.
-        return
-
-    # Load data from dumpfile
-    folded_dataset = load(path)
-    folds = folded_dataset['folds']
-    
-    # accuracy distribution
-    for fold in folds:
-        accuracies = fold['accuracies']
-        test_indexes = fold['test_indexes']
-
-        for i in range(len(test_indexes)):
-            gt_accs[test_indexes[i]] = accuracies[i]
-
+    gt_accs, _ = get_accuracy_map(cachepath)
     fig, ax = pyplot.subplots()
     ax.scatter(gt_fractions, gt_accs, marker='.', alpha=0.3)
-    ax.set_title('{}'
-        .format(VISUALS_CONFIG_STR), fontsize=10)
+    ax.set_title('{}, cache={}x{}'
+        .format(VISUALS_CONFIG_STR, w, h), fontsize=10)
     ax.set_xlabel('Fraction of pixels of type road marking')
     ax.set_ylabel('Accuracy score')
 
@@ -258,7 +250,29 @@ def plot_acc_vs_gt_fractions():
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-scatterplot.svg'
         .format(CONFIG_STR)))
 
-plot_prediction_img_comparison()
+plot_prediction_img_comparison('./cache_175x350', 'image1')
+plot_prediction_img_comparison('./cache_175x350', 'image618')
+plot_prediction_img_comparison('./cache_175x350', 'image633')
+plot_prediction_img_comparison('./cache_175x350', 'image924')
+
+# Low performance
+plot_prediction_img_comparison('./cache_175x350', 'image752')
+plot_prediction_img_comparison('./cache_175x350', 'image867')
+plot_prediction_img_comparison('./cache_175x350', 'image927')
+plot_prediction_img_comparison('./cache_175x350', 'image928')
+
+# High performance
+plot_prediction_img_comparison('./cache_175x350', 'image633')
+plot_prediction_img_comparison('./cache_175x350', 'image623')
+plot_prediction_img_comparison('./cache_175x350', 'image632')
+plot_prediction_img_comparison('./cache_175x350', 'image849')
+plot_prediction_img_comparison('./cache_175x350', 'image299')
+plot_prediction_img_comparison('./cache_175x350', 'image846')
+plot_prediction_img_comparison('./cache_175x350', 'image628')
+plot_prediction_img_comparison('./cache_175x350', 'image291')
+plot_prediction_img_comparison('./cache_175x350', 'image284')
+plot_prediction_img_comparison('./cache_175x350', 'image290')
+
 plot_gt_histogram()
 plot_overall_performance()
-plot_acc_vs_gt_fractions()
+plot_acc_vs_gt_fractions('./cache_175x350')
