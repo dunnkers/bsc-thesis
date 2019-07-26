@@ -356,42 +356,35 @@ def compute_and_plot_confusion_matrix(cachepath):
     out = imread_collection(join(cachepath, OUT_FOLDERNAME, IMG_GLOB))
     y_true = np.array(gt).ravel()
     y_pred = np.array(out).ravel()
-    cm = confusion_matrix(y_true, y_pred).ravel() # cm = tn, fp, fn, tp
+    cm = confusion_matrix(y_true, y_pred) # cm = tn, fp, fn, tp
     # cm = np.array([[55938320,  3327284],   [294897,  1689499]])
     class_names = ['Non-road marker', 'Road marker']
     print('Confusion matrix computed.')
+    tn, fp, fn, tp = cm
+    print('\ttn = {}, fp = {}, fn = {}, tp = {}', tn, fp, fn, tp)
 
     # Size
     h, w = gt[0].shape
 
     # Plot non-normalized confusion matrix
     plot_confusion_matrix(cm, w, h, target_names=class_names)
-    plt.show()
 
-
-
-plot_prediction_img_comparison('./cache_175x350', 'image1')
-plot_prediction_img_comparison('./cache_175x350', 'image618')
-plot_prediction_img_comparison('./cache_175x350', 'image633')
-plot_prediction_img_comparison('./cache_175x350', 'image924')
-
-# Low performance
+# Low accuracy score - black gt image
 plot_prediction_img_comparison('./cache_175x350', 'image752')
-plot_prediction_img_comparison('./cache_175x350', 'image867')
-plot_prediction_img_comparison('./cache_175x350', 'image927')
-plot_prediction_img_comparison('./cache_175x350', 'image928')
 
-# High performance
+# Average accuracy - interesting road condition
+plot_prediction_img_comparison('./cache_175x350', 'image618')
+
+### Appendix. Interesting road markings.
 plot_prediction_img_comparison('./cache_175x350', 'image633')
-plot_prediction_img_comparison('./cache_175x350', 'image623')
-plot_prediction_img_comparison('./cache_175x350', 'image632')
-plot_prediction_img_comparison('./cache_175x350', 'image849')
-plot_prediction_img_comparison('./cache_175x350', 'image299')
-plot_prediction_img_comparison('./cache_175x350', 'image846')
-plot_prediction_img_comparison('./cache_175x350', 'image628')
 plot_prediction_img_comparison('./cache_175x350', 'image291')
-plot_prediction_img_comparison('./cache_175x350', 'image284')
-plot_prediction_img_comparison('./cache_175x350', 'image290')
+plot_prediction_img_comparison('./cache_175x350', 'image12')
+plot_prediction_img_comparison('./cache_175x350', 'image359')
+plot_prediction_img_comparison('./cache_175x350', 'image631')
+plot_prediction_img_comparison('./cache_175x350', 'image738')
+plot_prediction_img_comparison('./cache_175x350', 'image853')
+## Appendix - bad ground truth image?
+plot_prediction_img_comparison('./cache_175x350', 'image924')
 
 plot_gt_histogram()
 plot_overall_performance()
