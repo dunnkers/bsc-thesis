@@ -384,16 +384,18 @@ plot_prediction_img_comparison('./cache_175x350', 'image631')
 
 ### Appendix. Interesting road markings.
 plot_prediction_img_comparison('./cache_175x350', 'image633') # high acc
-plot_prediction_img_comparison('./cache_175x350', 'image291')
 plot_prediction_img_comparison('./cache_175x350', 'image12')
 plot_prediction_img_comparison('./cache_175x350', 'image359')
 plot_prediction_img_comparison('./cache_175x350', 'image738')
 plot_prediction_img_comparison('./cache_175x350', 'image853')
 ## Appendix - bad ground truth image?
 plot_prediction_img_comparison('./cache_175x350', 'image924')
+## Appendix - shadows?
+plot_prediction_img_comparison('./cache_175x350', 'image639')
+plot_prediction_img_comparison('./cache_175x350', 'image731', clf='SVM')
 
 plot_gt_histogram()
 plot_overall_performance()
 plot_acc_vs_gt_fractions('./cache_175x350')
-compute_and_plot_confusion_matrix('./cache_175x350')
+compute_and_plot_confusion_matrix('./cache_175x350') # 350x700 causes memory error.
 compare_classifiers_performance()

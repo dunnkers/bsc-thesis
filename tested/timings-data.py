@@ -1,4 +1,5 @@
 # 10-FOLD USING 1000 TRAIN/TEST IMAGES
+# Intel® Core™ i7-3820 CPU @ 3.60GHz × 8, 64-bit Ubuntu 19.09, 7,7 GiB RAM
 
 train_times_svm_in_sec_per_fold = {
   './cache_35x70': [ 15.69, 14.78, 14.55, 14.61 ],
