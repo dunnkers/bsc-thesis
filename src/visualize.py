@@ -22,6 +22,14 @@ from constants import (CACHES, CONFIG_STR, CONFIG_STR_NOCLF, DATA_PATH,
                        VISUALS_CONFIG_STR, VISUALS_FOLDERPATH)
 
 
+def getConfigStr(clf):
+    configstr = '{},clf={}'.format(CONFIG_STR_NOCLF, clf)
+    outfolder = '{},output'.format(configstr)
+    visualstr = 'folds={}, clf={}'.format(N_FOLDS, clf)
+    dumppath  = '{},tested.joblib'.format(configstr)
+
+    return (configstr, outfolder, visualstr, dumppath)
+
 def get_accuracy_map(cachepath):
     """ Returns a 1-D map containing the accuracy scores of this cache, 
         as according to its gt_files array. """
@@ -52,10 +60,8 @@ def plot_prediction_img_comparison(cachepath, imagename, clf='XGBoost'):
     """ Plot comparison chart between groundtruth, supervised, unsupervised-
         and the prediction. """
     imagefile = '{}.png'.format(imagename)
-    configstr = '{},clf={}'.format(CONFIG_STR_NOCLF, clf)
-    outfolder = '{},output'.format(configstr)
-    configstr_visuals = 'folds={}, clf={}'.format(N_FOLDS, clf)
-    
+    configstr, outfolder, visualstr, _ = getConfigStr(clf)
+
     # Image paths
     gtpath  = join(cachepath, GT_FOLDERNAME, imagefile)
     svpath  = gtpath.replace(
@@ -110,7 +116,7 @@ def plot_prediction_img_comparison(cachepath, imagename, clf='XGBoost'):
     grid[3].imshow(out, cmap='gray')
 
     fig.text(0.193, 0.945, '{}, cache={}x{}, im={}'
-        .format(configstr_visuals, w, h, imagename), fontsize=10)
+        .format(visualstr, w, h, imagename), fontsize=10)
 
     fig.text(0.54, 0.88, 'contrast stretched', fontsize=10, color='white',
         bbox={'facecolor':'white', 'alpha':0.5, 'pad':2})
@@ -197,18 +203,19 @@ def compare_classifiers_performance():
     plt.close(fig)
     plt.clf()
 
-def plot_overall_performance():
+def plot_overall_performance(clf='XGBoost'):
     """ Compare cache performance by plotting several boxplots, resembling
         mean fold accuracies. """
+    configstr, outfolder, visualstr, dumppath = getConfigStr(clf)
 
     labels = []
-    per_cache_means = []
+    # per_cache_means = []
     per_cache_accuracies = []
     all_accuracies = []
 
     for cache in CACHES:
         cachepath = cache.path.replace('./', './tested/')
-        path = join(cachepath, DUMP_TESTED)
+        path = join(cachepath, dumppath)
         if not exists(path): # skip when cache not tested yet.
             continue
 
@@ -217,14 +224,14 @@ def plot_overall_performance():
         folds = folded_dataset['folds']
         
         # accuracy distribution
-        fold_mean_accuracies = []
+        # fold_mean_accuracies = []
         cache_accuracies = []
         for fold in folds:
             fold_accuracies = fold['accuracies']
             all_accuracies.extend(fold_accuracies)
             cache_accuracies.extend(fold_accuracies)
-            fold_mean_accuracies.append(np.mean(fold_accuracies))
-        per_cache_means.append(fold_mean_accuracies)
+            # fold_mean_accuracies.append(np.mean(fold_accuracies))
+        # per_cache_means.append(fold_mean_accuracies)
         per_cache_accuracies.append(cache_accuracies)
 
         # Attach pixel configuration label
@@ -239,7 +246,7 @@ def plot_overall_performance():
     ##### Violin plot - accuracy performance & distribution
     fig, ax = plt.subplots()
     ax.set_title('{}'
-        .format(VISUALS_CONFIG_STR), fontsize=10)
+        .format(visualstr), fontsize=10)
     ax.set_xlabel('cache (width x height) in pixels')
     ax.set_ylabel('Accuracy score')
     ax.violinplot(per_cache_accuracies,
@@ -251,14 +258,14 @@ def plot_overall_performance():
     fig.suptitle('        Per-cache test performance')
     fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-violinplot.svg'
-        .format(CONFIG_STR)))
+        .format(configstr)))
     plt.close(fig)
     plt.clf()
 
     ##### Histogram - accuracy distribution
     fig, ax = plt.subplots()
     ax.set_title('{}'
-        .format(VISUALS_CONFIG_STR), fontsize=10)
+        .format(visualstr), fontsize=10)
     ax.set_xlabel('Accuracy score')
     ax.set_ylabel('Frequency (log)')
     _, x, _ = ax.hist(all_accuracies, bins=64, density=True, log=True)
@@ -268,24 +275,25 @@ def plot_overall_performance():
     fig.suptitle('            Accuracy score distribution')
     fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-histogram.svg'
-        .format(CONFIG_STR)))
+        .format(configstr)))
     plt.close(fig)
     plt.clf()
     
+    # -> using seaborn classifier comparison plot now..
     ##### Boxplot with fold means
-    fig, ax = plt.subplots()
-    ax.set_xlabel('cache (width x height) in pixels')
-    ax.set_ylabel('Accuracy score')
-    ax.set_title('{}'
-        .format(VISUALS_CONFIG_STR), fontsize=10)
-    ax.boxplot(per_cache_means, labels=labels)
-    fig.autofmt_xdate()
-    fig.suptitle('           Per-cache folds mean test performance')
-    fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
-    fig.savefig(join(VISUALS_FOLDERPATH, '{}-boxplot.svg'
-        .format(CONFIG_STR)))
-    plt.close(fig)
-    plt.clf()
+    # fig, ax = plt.subplots()
+    # ax.set_xlabel('cache (width x height) in pixels')
+    # ax.set_ylabel('Accuracy score')
+    # ax.set_title('{}'
+    #     .format(VISUALS_CONFIG_STR), fontsize=10)
+    # ax.boxplot(per_cache_means, labels=labels)
+    # fig.autofmt_xdate()
+    # fig.suptitle('           Per-cache folds mean test performance')
+    # fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
+    # fig.savefig(join(VISUALS_FOLDERPATH, '{}-boxplot.svg'
+    #     .format(CONFIG_STR)))
+    # plt.close(fig)
+    # plt.clf()
 
 def plot_acc_vs_gt_fractions(cachepath):
     gt  = imread_collection(join(cachepath, GT_FOLDERNAME, IMG_GLOB))
@@ -392,21 +400,20 @@ def compute_and_plot_confusion_matrix(cachepath):
 plot_prediction_img_comparison('./cache_175x350', 'image752')
 
 # Average accuracy - interesting road condition
-plot_prediction_img_comparison('./cache_175x350', 'image618')
+plot_prediction_img_comparison('./cache_175x350', 'image631')
 
 ### Appendix. Interesting road markings.
-plot_prediction_img_comparison('./cache_175x350', 'image633')
+plot_prediction_img_comparison('./cache_175x350', 'image633') # high acc
 plot_prediction_img_comparison('./cache_175x350', 'image291')
 plot_prediction_img_comparison('./cache_175x350', 'image12')
 plot_prediction_img_comparison('./cache_175x350', 'image359')
-plot_prediction_img_comparison('./cache_175x350', 'image631')
 plot_prediction_img_comparison('./cache_175x350', 'image738')
 plot_prediction_img_comparison('./cache_175x350', 'image853')
 ## Appendix - bad ground truth image?
 plot_prediction_img_comparison('./cache_175x350', 'image924')
 
-# plot_gt_histogram()
-# plot_overall_performance()
-# plot_acc_vs_gt_fractions('./cache_100x200')
-# compute_and_plot_confusion_matrix('./cache_175x350')
-# compare_classifiers_performance()
+plot_gt_histogram()
+plot_overall_performance()
+plot_acc_vs_gt_fractions('./cache_100x200')
+compute_and_plot_confusion_matrix('./cache_175x350')
+compare_classifiers_performance()
