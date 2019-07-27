@@ -394,6 +394,6 @@ plot_prediction_img_comparison('./cache_175x350', 'image924')
 
 plot_gt_histogram()
 plot_overall_performance()
-plot_acc_vs_gt_fractions('./cache_100x200')
+plot_acc_vs_gt_fractions('./cache_175x350')
 compute_and_plot_confusion_matrix('./cache_175x350')
 compare_classifiers_performance()
