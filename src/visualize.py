@@ -186,19 +186,43 @@ def compare_classifiers_performance():
         print('No data for plotting. ', 'compare_classifiers_performance()')
         return
 
-    ##### Seaborn plot
+    ##### Classifier comparison boxplots
     sns.set(style="whitegrid")
-    dataframe = pd.DataFrame(comparison_boxplot)
-
+    df = pd.DataFrame(comparison_boxplot)
     fig, (ax) = plt.subplots(1, 1)
     ax = sns.boxplot(x="cache", y="accuracy", hue="Classifier",
-        data=dataframe, palette="Set3")
+        data=df, palette="Set3")
     ax.set_title('{}-fold classifier performance'.format(N_FOLDS))
     plt.xticks(rotation=30)
     ax.set(xlabel='Cache (width x height) in pixels',
            ylabel='Accuracy score')
     fig.tight_layout()
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-classifiers-performance.svg'
+        .format(CONFIG_STR_NOCLF)))
+    plt.close(fig)
+    plt.clf()
+
+    ##### Cache comparison - classifiers aggregated.
+    sns.set(style="whitegrid")
+    fig, (ax) = plt.subplots(1, 1)
+
+    # https://stackoverflow.com/questions/21912634/how-can-i-sort-a-boxplot-in-pandas-by-the-median-values
+    grouped = df.groupby(["cache"])
+    df2 = pd.DataFrame({col:vals['accuracy'] for col,vals in grouped})
+    meds = df2.median()
+    meds.sort_values(ascending=True, inplace=True)
+    df2 = df2[meds.index]
+    # ax = df2.boxplot(rot=30,return_type="axes")
+
+    ax=sns.boxplot(data=df2,palette="Set3")
+    # ax = sns.boxplot(x="cache", y="accuracy",
+    #     data=df2, palette="Set3")
+    ax.set_title('{}-fold cache performance'.format(N_FOLDS))
+    plt.xticks(rotation=30)
+    ax.set(xlabel='Cache (width x height) in pixels',
+           ylabel='Accuracy score')
+    fig.tight_layout()
+    fig.savefig(join(VISUALS_FOLDERPATH, '{}-cache-performance.svg'
         .format(CONFIG_STR_NOCLF)))
     plt.close(fig)
     plt.clf()
@@ -376,26 +400,26 @@ def compute_and_plot_confusion_matrix(cachepath):
     # Plot non-normalized confusion matrix
     plot_confusion_matrix(cm, w, h, target_names=class_names)
 
-# Low accuracy score - black gt image
-plot_prediction_img_comparison('./cache_175x350', 'image752')
+# # Low accuracy score - black gt image
+# plot_prediction_img_comparison('./cache_175x350', 'image752')
 
-# Average accuracy - interesting road condition
-plot_prediction_img_comparison('./cache_175x350', 'image631')
+# # Average accuracy - interesting road condition
+# plot_prediction_img_comparison('./cache_175x350', 'image631')
 
-### Appendix. Interesting road markings.
-plot_prediction_img_comparison('./cache_175x350', 'image633') # high acc
-plot_prediction_img_comparison('./cache_175x350', 'image12')
-plot_prediction_img_comparison('./cache_175x350', 'image359')
-plot_prediction_img_comparison('./cache_175x350', 'image738')
-plot_prediction_img_comparison('./cache_175x350', 'image853')
-## Appendix - bad ground truth image?
-plot_prediction_img_comparison('./cache_175x350', 'image924')
-## Appendix - shadows?
-plot_prediction_img_comparison('./cache_175x350', 'image639')
-plot_prediction_img_comparison('./cache_175x350', 'image731', clf='SVM')
+# ### Appendix. Interesting road markings.
+# plot_prediction_img_comparison('./cache_175x350', 'image633') # high acc
+# plot_prediction_img_comparison('./cache_175x350', 'image12')
+# plot_prediction_img_comparison('./cache_175x350', 'image359')
+# plot_prediction_img_comparison('./cache_175x350', 'image738')
+# plot_prediction_img_comparison('./cache_175x350', 'image853')
+# ## Appendix - bad ground truth image?
+# plot_prediction_img_comparison('./cache_175x350', 'image924')
+# ## Appendix - shadows?
+# plot_prediction_img_comparison('./cache_175x350', 'image639', clf='XGBoost')
+# plot_prediction_img_comparison('./cache_175x350', 'image639', clf='SVM')
 
-plot_gt_histogram()
-plot_overall_performance()
-plot_acc_vs_gt_fractions('./cache_175x350')
-compute_and_plot_confusion_matrix('./cache_175x350') # 350x700 causes memory error.
+# plot_gt_histogram()
+# plot_overall_performance()
+# plot_acc_vs_gt_fractions('./cache_175x350')
+# compute_and_plot_confusion_matrix('./cache_175x350') # 350x700 causes memory error.
 compare_classifiers_performance()
