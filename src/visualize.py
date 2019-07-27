@@ -192,12 +192,12 @@ def compare_classifiers_performance():
     fig, (ax) = plt.subplots(1, 1)
     ax = sns.boxplot(x="cache", y="accuracy", hue="Classifier",
         data=df, palette="Set3")
-    ax.set_title('{}-fold classifier performance'.format(N_FOLDS))
+    ax.set_title('{}-fold cache/classifier performance'.format(N_FOLDS))
     plt.xticks(rotation=30)
     ax.set(xlabel='Cache (width x height) in pixels',
            ylabel='Accuracy score')
     fig.tight_layout()
-    fig.savefig(join(VISUALS_FOLDERPATH, '{}-classifiers-performance.svg'
+    fig.savefig(join(VISUALS_FOLDERPATH, '{}-classifiers-cache-performance.svg'
         .format(CONFIG_STR_NOCLF)))
     plt.close(fig)
     plt.clf()
@@ -212,17 +212,36 @@ def compare_classifiers_performance():
     meds = df2.median()
     meds.sort_values(ascending=True, inplace=True)
     df2 = df2[meds.index]
-    # ax = df2.boxplot(rot=30,return_type="axes")
 
-    ax=sns.boxplot(data=df2,palette="Set3")
-    # ax = sns.boxplot(x="cache", y="accuracy",
-    #     data=df2, palette="Set3")
+    ax = sns.boxplot(data=df2,palette="Set3")
     ax.set_title('{}-fold cache performance'.format(N_FOLDS))
     plt.xticks(rotation=30)
     ax.set(xlabel='Cache (width x height) in pixels',
            ylabel='Accuracy score')
     fig.tight_layout()
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-cache-performance.svg'
+        .format(CONFIG_STR_NOCLF)))
+    plt.close(fig)
+    plt.clf()
+
+    ##### Classifiers comparison - caches aggregated.
+    sns.set(style="whitegrid")
+    fig, (ax) = plt.subplots(1, 1)
+
+    # https://stackoverflow.com/questions/21912634/how-can-i-sort-a-boxplot-in-pandas-by-the-median-values
+    grouped = df.groupby(["Classifier"])
+    df2 = pd.DataFrame({col:vals['accuracy'] for col,vals in grouped})
+    meds = df2.median()
+    meds.sort_values(ascending=True, inplace=True)
+    df2 = df2[meds.index]
+
+    ax = sns.boxenplot(data = df2)
+    ax.set_title('{}-fold classifier performance'.format(N_FOLDS))
+    plt.xticks(rotation=30)
+    ax.set(xlabel='Classifier',
+           ylabel='Accuracy score')
+    fig.tight_layout()
+    fig.savefig(join(VISUALS_FOLDERPATH, '{}-classifiers-performance.svg'
         .format(CONFIG_STR_NOCLF)))
     plt.close(fig)
     plt.clf()
