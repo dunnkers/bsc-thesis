@@ -1,4 +1,6 @@
-train_times_svm_in_sec_per_fold_n1000 = {
+# 10-FOLD USING 1000 TRAIN/TEST IMAGES
+
+train_times_svm_in_sec_per_fold = {
   './cache_35x70': [ 15.69, 14.78, 14.55, 14.61 ],
   './cache_50x100': [ 16.30, 18.31, 16.28, 17.56 ],
   './cache_70x140': [ 18.27, 16.58, 16.04, 16.65 ],
@@ -9,7 +11,7 @@ train_times_svm_in_sec_per_fold_n1000 = {
   './cache_525x1050': [17.35, 17.51, 17.72, 17.91, 17.71, 17.67, 17.89, 17.73, 17.85, 17.48]
 }
 
-train_times_xgboost_in_sec_per_fold_n1000 = {
+train_times_xgboost_in_sec_per_fold = {
   './cache_35x70': [ 11.29, 10.68, 10.63, 10.11, 11.10, 10.72, 10.17, 9.95, 10.01, 10.05 ],
   './cache_50x100': [ 10.10, 10.09, 10.10, 9.99, 10.06, 10.21, 10.06, 10.03, 10.13, 9.99 ],
   './cache_70x140': [ 10.20, 10.11, 10.04, 10.12, 10.24, 10.16, 10.11, 10.29, 10.31, 10.22 ],
@@ -21,21 +23,17 @@ train_times_xgboost_in_sec_per_fold_n1000 = {
 }
 
 test_timings_svm_img_per_sec = {
-    './cache_35x70': 9.56,
-    './cache_50x100': 4.85,
-    './cache_70x140': 2.48,
-    './cache_100x200': 1.14,
-    './cache_140x280': 0.5988,
-    './cache_175x350': 0.3623,
-    './cache_350x700': 0.09606,
-    './cache_525x1050': 0.04246
-}
-
-test_timings_svm_img_per_sec_n1000 = {
+    './cache_35x70': 1.71,
+    './cache_50x100': 0.7407,
+    './cache_70x140': 0.3676,
+    './cache_100x200': 0.165837,
+    './cache_140x280': 0.085251,
+    './cache_175x350': 0.0531067,
     './cache_350x700': 0.012918,
+    './cache_525x1050': 0.006335931
 }
 
-test_timings_xgboost_img_per_sec_n1000 = {
+test_timings_xgboost_img_per_sec = {
   './cache_35x70': 41.82,
   './cache_50x100': 28.07,
   './cache_70x140': 16.46,
