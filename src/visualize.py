@@ -29,7 +29,7 @@ def get_accuracy_map(cachepath):
     cachepath_tested = cachepath.replace('./', './tested/')
     path = join(cachepath_tested, DUMP_TESTED)
     if not exists(path): # skip when cache not tested yet.
-        return []
+        return ([], [])
 
     # Load data from dumpfile
     folded_dataset = load(path)
@@ -74,11 +74,16 @@ def plot_prediction_img_comparison(cachepath, imagename):
     out = imread(outpath)
 
     ### Find accuracy
+    acc = None
     acc_map = get_accuracy_map(cachepath)
     for gt_acc, gt_file in zip(*acc_map):
         if gt_file == gtpath: # file found
             acc = gt_acc
             break
+
+    if acc == None:
+        print('Accuracy not found for', imagename)
+        return
 
     # Size
     h, w = gt.shape
@@ -162,17 +167,22 @@ def compare_classifiers_performance():
                     fold_accuracies = fold['accuracies']
                     fold_acc = np.mean(fold_accuracies)
                     comparison_boxplot.append(dict(
-                        Accuracy=fold_acc,
+                        accuracy=fold_acc,
                         Classifier=clf,
-                        Cache=cachelabel
+                        cache=cachelabel
                     ))
+
+    # No data
+    if len(comparison_boxplot) == 0:
+        print('No data for plotting. ', 'compare_classifiers_performance()')
+        return
 
     ##### Seaborn plot
     sns.set(style="whitegrid")
     dataframe = pd.DataFrame(comparison_boxplot)
 
     fig, (ax) = plt.subplots(1, 1)
-    ax = sns.boxplot(x="Cache", y="Accuracy", hue="Classifier",
+    ax = sns.boxplot(x="cache", y="accuracy", hue="Classifier",
         data=dataframe, palette="Set3")
     ax.set_title('{}-fold classifier performance'.format(N_FOLDS))
     plt.xticks(rotation=30)
@@ -219,7 +229,8 @@ def plot_overall_performance():
         labels.append('{}x{}'.format(w, h))
     
     if len(all_accuracies) == 0: # Nothing to plot
-        print('No boxplot plotted! - no data for current config found!')
+        print('No boxplot plotted! - no data for current config found!',
+            'plot_overall_performance()')
         return
 
     ##### Violin plot - accuracy performance & distribution
@@ -292,7 +303,12 @@ def plot_acc_vs_gt_fractions(cachepath):
     h, w = gt[0].shape
     
     ####### Accuracies
-    gt_accs, _ = get_accuracy_map(cachepath)
+    gt_accs, _ = get_accuracy_map(cachepath)    
+    if len(gt_accs) == 0:
+        print('No gt_accs found')
+        return
+    assert(len(gt_fractions) == len(gt_accs))
+
     fig, ax = plt.subplots()
     ax.scatter(gt_fractions, gt_accs, marker='.', alpha=0.3)
     ax.set_title('{}, cache={}x{}'
@@ -360,8 +376,8 @@ def compute_and_plot_confusion_matrix(cachepath):
     # cm = np.array([[55938320,  3327284],   [294897,  1689499]])
     class_names = ['Non-road marker', 'Road marker']
     print('Confusion matrix computed.')
-    tn, fp, fn, tp = cm
-    print('\ttn = {}, fp = {}, fn = {}, tp = {}', tn, fp, fn, tp)
+    tn, fp, fn, tp = cm.ravel()
+    print('\ttn = {}, fp = {}, fn = {}, tp = {}'.format(tn, fp, fn, tp))
 
     # Size
     h, w = gt[0].shape
