@@ -206,10 +206,9 @@ def compare_classifiers_performance():
 def plot_overall_performance(clf='XGBoost'):
     """ Compare cache performance by plotting several boxplots, resembling
         mean fold accuracies. """
-    configstr, outfolder, visualstr, dumppath = getConfigStr(clf)
+    configstr, _, visualstr, dumppath = getConfigStr(clf)
 
     labels = []
-    # per_cache_means = []
     per_cache_accuracies = []
     all_accuracies = []
 
@@ -224,14 +223,11 @@ def plot_overall_performance(clf='XGBoost'):
         folds = folded_dataset['folds']
         
         # accuracy distribution
-        # fold_mean_accuracies = []
         cache_accuracies = []
         for fold in folds:
             fold_accuracies = fold['accuracies']
             all_accuracies.extend(fold_accuracies)
             cache_accuracies.extend(fold_accuracies)
-            # fold_mean_accuracies.append(np.mean(fold_accuracies))
-        # per_cache_means.append(fold_mean_accuracies)
         per_cache_accuracies.append(cache_accuracies)
 
         # Attach pixel configuration label
@@ -278,22 +274,6 @@ def plot_overall_performance(clf='XGBoost'):
         .format(configstr)))
     plt.close(fig)
     plt.clf()
-    
-    # -> using seaborn classifier comparison plot now..
-    ##### Boxplot with fold means
-    # fig, ax = plt.subplots()
-    # ax.set_xlabel('cache (width x height) in pixels')
-    # ax.set_ylabel('Accuracy score')
-    # ax.set_title('{}'
-    #     .format(VISUALS_CONFIG_STR), fontsize=10)
-    # ax.boxplot(per_cache_means, labels=labels)
-    # fig.autofmt_xdate()
-    # fig.suptitle('           Per-cache folds mean test performance')
-    # fig.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=1.0)
-    # fig.savefig(join(VISUALS_FOLDERPATH, '{}-boxplot.svg'
-    #     .format(CONFIG_STR)))
-    # plt.close(fig)
-    # plt.clf()
 
 def plot_acc_vs_gt_fractions(cachepath):
     gt  = imread_collection(join(cachepath, GT_FOLDERNAME, IMG_GLOB))
