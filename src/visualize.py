@@ -97,6 +97,9 @@ def plot_prediction_img_comparison(cachepath, imagename, clf='XGBoost'):
     # Size
     h, w = gt.shape
 
+    # > sidenote: for images of smaller height, set aspect=False,
+    # along with a `aspect='auto'` for each imshow() call.
+
     # Plot 2x2
     fig = plt.figure(figsize=(7.0, 9.0))
     fig.suptitle('Prediction result')
