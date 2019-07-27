@@ -419,6 +419,93 @@ def compute_and_plot_confusion_matrix(cachepath):
     # Plot non-normalized confusion matrix
     plot_confusion_matrix(cm, w, h, target_names=class_names)
 
+def plot_pipeline_performance():
+    # 10-FOLD USING 1000 TRAIN/TEST IMAGES
+    # Intel® Core™ i7-3820 Quad CPU @ 3.60GHz × 8, 64-bit Ubuntu 19.09, 7,7 GiB RAM
+
+    # transform = imgs per second during transformation sampling.
+    # train = train times in seconds per fold
+    # test = test time in images per second
+    df = pd.DataFrame([
+            dict(cache='35x70', transform=3286.1369999999997),
+            dict(cache='50x100', transform=3009.1879999999996),
+            dict(cache='70x140', transform=2591.011),
+            dict(cache='100x200', transform=2040.569),
+            dict(cache='140x280', transform=1414.0760000000002),
+            dict(cache='175x350', transform=1072.813),
+            dict(cache='350x700', transform=326.947),
+            dict(cache='525x1050', transform=146.06),
+            dict(cache='35x70', Classifier='SVM', test=1.71, train=14.907499999999999),
+            dict(cache='50x100', Classifier='SVM', test=0.7407, train=17.1125),
+            dict(cache='70x140', Classifier='SVM', test=0.3676, train=16.884999999999998),
+            dict(cache='100x200', Classifier='SVM', test=0.165837, train=17.04),
+            dict(cache='140x280', Classifier='SVM', test=0.085251, train=17.5975),
+            dict(cache='175x350', Classifier='SVM', test=0.0531067, train=18.0075),
+            dict(cache='350x700', Classifier='SVM', test=0.012918, train=18.465999999999998),
+            dict(cache='525x1050', Classifier='SVM', test=0.006335931, train=17.682),
+            dict(cache='35x70', Classifier='XGBoost', test=41.82, train=10.471),
+            dict(cache='50x100', Classifier='XGBoost', test=28.07, train=10.075999999999999),
+            dict(cache='70x140', Classifier='XGBoost', test=16.46, train=10.18),
+            dict(cache='100x200', Classifier='XGBoost', test=9.41, train=10.194999999999999),
+            dict(cache='140x280', Classifier='XGBoost', test=4.98, train=10.209),
+            dict(cache='175x350', Classifier='XGBoost', test=2.81, train=10.213999999999999),
+            dict(cache='350x700', Classifier='XGBoost', test=0.8475, train=10.360000000000003),
+            dict(cache='525x1050', Classifier='XGBoost', test=0.33482, train=10.245999999999999),
+        ])
+
+# [
+# 0.5847953216374269,
+# 1.3500742540839745,
+# 2.7203482045701852,
+# 6.030017426750363,
+# 11.730067682490528,
+# 18.830015798383254,
+# 77.41136398823348,
+# 157.83000162091412,
+# 0.02391200382592061,
+# 0.03562522265764161,
+# 0.060753341433778855,
+# 0.10626992561105207,
+# 0.2008032128514056,
+# 0.35587188612099646,
+# 1.1799410029498525,
+# 2.9866794098321487
+# ]
+
+    f, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(7, 8), sharex=True)
+    sns.set(style="whitegrid")
+
+    ### (1) Transformation speed
+    sns.barplot(x="cache", y="transform",
+        data=df, palette="rocket", ax=ax1)
+    ax1.set_title('Transformations performance, {}-fold'.format(N_FOLDS))
+    ax1.axhline(0, color="k", clip_on=False)
+    ax1.set(ylabel='imgs sampled / sec', xlabel='')
+
+    ### (2) Train speed
+    sns.barplot(x="cache", y="train", hue="Classifier",
+        data=df, palette="vlag", ax=ax2)
+    ax2.set_title('Train performance, {}-fold'.format(N_FOLDS))
+    ax2.axhline(0, color="k", clip_on=False)
+    ax2.set(ylabel='imgs trained / sec', xlabel='')
+
+    ### (3) Test speed
+    sns.barplot(x="cache", y="test", hue="Classifier",
+        data=df, palette="deep", ax=ax3)
+    ax3.set_title('Test performance, {}-fold'.format(N_FOLDS))
+    ax3.axhline(0, color="k", clip_on=False)
+    ax3.set(xlabel='Cache (width x height) in pixels',
+           ylabel='imgs tested / sec')
+    
+    # Finalize
+    plt.xticks(rotation=30)
+    sns.despine(bottom=True)
+    f.tight_layout(h_pad=2)
+    f.savefig(join(VISUALS_FOLDERPATH, '{}-pipeline-performance.svg'
+        .format(CONFIG_STR_NOCLF)))
+    plt.close(f)
+    plt.clf()
+
 # # Low accuracy score - black gt image
 # plot_prediction_img_comparison('./cache_175x350', 'image752')
 
@@ -441,4 +528,5 @@ def compute_and_plot_confusion_matrix(cachepath):
 # plot_overall_performance()
 # plot_acc_vs_gt_fractions('./cache_175x350')
 # compute_and_plot_confusion_matrix('./cache_175x350') # 350x700 causes memory error.
-compare_classifiers_performance()
+# compare_classifiers_performance()
+plot_pipeline_performance()
