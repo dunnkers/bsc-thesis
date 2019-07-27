@@ -48,7 +48,7 @@ def get_accuracy_map(cachepath):
         
     return (gt_accs, gt_files)
 
-def plot_prediction_img_comparison(cachepath, imagename):
+def plot_prediction_img_comparison(cachepath, imagename, clf='XGBoost'):
     """ Plot comparison chart between groundtruth, supervised, unsupervised-
         and the prediction. """
     imagefile = '{}.png'.format(imagename)
@@ -61,7 +61,7 @@ def plot_prediction_img_comparison(cachepath, imagename):
             GT_FOLDERNAME, USV_FOLDERNAME).replace(GT_IMAGENAME, USV_IMAGENAME)
     outpath = gtpath.replace(
             # './', './tested/').replace(
-                GT_FOLDERNAME, OUT_FOLDERNAME)
+                GT_FOLDERNAME, '{},clf={},output'.format(CONFIG_STR_NOCLF, clf))
 
     # Skip when not tested yet
     if not exists(outpath):
