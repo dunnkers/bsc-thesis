@@ -52,6 +52,9 @@ def plot_prediction_img_comparison(cachepath, imagename, clf='XGBoost'):
     """ Plot comparison chart between groundtruth, supervised, unsupervised-
         and the prediction. """
     imagefile = '{}.png'.format(imagename)
+    configstr = '{},clf={}'.format(CONFIG_STR_NOCLF, clf)
+    outfolder = '{},output'.format(configstr)
+    configstr_visuals = 'folds={}, clf={}'.format(N_FOLDS, clf)
     
     # Image paths
     gtpath  = join(cachepath, GT_FOLDERNAME, imagefile)
@@ -61,7 +64,7 @@ def plot_prediction_img_comparison(cachepath, imagename, clf='XGBoost'):
             GT_FOLDERNAME, USV_FOLDERNAME).replace(GT_IMAGENAME, USV_IMAGENAME)
     outpath = gtpath.replace(
             # './', './tested/').replace(
-                GT_FOLDERNAME, '{},clf={},output'.format(CONFIG_STR_NOCLF, clf))
+                GT_FOLDERNAME, outfolder)
 
     # Skip when not tested yet
     if not exists(outpath):
@@ -107,7 +110,7 @@ def plot_prediction_img_comparison(cachepath, imagename, clf='XGBoost'):
     grid[3].imshow(out, cmap='gray')
 
     fig.text(0.193, 0.945, '{}, cache={}x{}, im={}'
-        .format(VISUALS_CONFIG_STR, w, h, imagename), fontsize=10)
+        .format(configstr_visuals, w, h, imagename), fontsize=10)
 
     fig.text(0.54, 0.88, 'contrast stretched', fontsize=10, color='white',
         bbox={'facecolor':'white', 'alpha':0.5, 'pad':2})
@@ -116,7 +119,7 @@ def plot_prediction_img_comparison(cachepath, imagename, clf='XGBoost'):
         bbox={'facecolor':'black', 'alpha':0.7, 'pad':2})
 
     fig.savefig(join(VISUALS_FOLDERPATH, '{}-prediction-{}.svg'
-        .format(CONFIG_STR, imagename)), bbox_inches='tight')
+        .format(configstr, imagename)), bbox_inches='tight')
     plt.close(fig)
     plt.clf()
 
@@ -402,8 +405,8 @@ plot_prediction_img_comparison('./cache_175x350', 'image853')
 ## Appendix - bad ground truth image?
 plot_prediction_img_comparison('./cache_175x350', 'image924')
 
-plot_gt_histogram()
-plot_overall_performance()
-plot_acc_vs_gt_fractions('./cache_100x200')
-compute_and_plot_confusion_matrix('./cache_175x350')
-compare_classifiers_performance()
+# plot_gt_histogram()
+# plot_overall_performance()
+# plot_acc_vs_gt_fractions('./cache_100x200')
+# compute_and_plot_confusion_matrix('./cache_175x350')
+# compare_classifiers_performance()
