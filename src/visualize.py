@@ -361,8 +361,11 @@ def plot_acc_vs_gt_fractions(cachepath):
     plt.close(fig)
     plt.clf()
 
-def plot_confusion_matrix(cm, w, h, target_names):
+def plot_confusion_matrix(cm, w, h, new_configstr, target_names):
     """ Given a sklearn confusion matrix (cm), make a nice plot """
+    configstr, _, visualstr, _ = new_configstr
+
+    # Compute acc/misclass
     accuracy = np.trace(cm) / float(np.sum(cm))
     misclass = 1 - accuracy
 
@@ -372,7 +375,7 @@ def plot_confusion_matrix(cm, w, h, target_names):
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.text(0.10, -0.7, 'Confusion matrix', fontsize=12)
     plt.title('{}, cache={}x{}'
-        .format(VISUALS_CONFIG_STR, w, h), fontsize=10)
+        .format(visualstr, w, h), fontsize=10)
     plt.colorbar()
 
     if target_names is not None:
@@ -400,27 +403,30 @@ def plot_confusion_matrix(cm, w, h, target_names):
     plt.tight_layout()
     # plt.tight_layout(rect=[0, 0.03, 1, 0.92], pad=0.1, w_pad=0.1, h_pad=0.1)
     plt.savefig(join(VISUALS_FOLDERPATH, '{}-confusion-matrix.svg'
-        .format(CONFIG_STR)))
+        .format(configstr)))
     plt.clf()
 
-def compute_and_plot_confusion_matrix(cachepath):
-    print('Computing confusion matrix...')
+def compute_and_plot_confusion_matrix(cachepath, clf='XGBoost'):
+    new_configstr = getConfigStr(clf)
+    outfolder = new_configstr[1]
+
     gt  = imread_collection(join(cachepath, GT_FOLDERNAME, IMG_GLOB))
-    out = imread_collection(join(cachepath, OUT_FOLDERNAME, IMG_GLOB))
-    y_true = np.array(gt).ravel()
-    y_pred = np.array(out).ravel()
-    cm = confusion_matrix(y_true, y_pred) # cm = tn, fp, fn, tp
-    # cm = np.array([[55938320,  3327284],   [294897,  1689499]])
-    class_names = ['Non-road marker', 'Road marker']
-    print('Confusion matrix computed.')
-    tn, fp, fn, tp = cm.ravel()
-    print('\ttn = {}, fp = {}, fn = {}, tp = {}'.format(tn, fp, fn, tp))
+    out = imread_collection(join(cachepath, outfolder,     IMG_GLOB))
+    assert(len(gt.files) == len(out.files))
+
+    # Compute cm in incremental fashion
+    cm = np.zeros((2, 2))
+    for i in tqdm(range(len(gt.files)), desc="Computing confusion matrix"):
+        y_true = gt[i].ravel()
+        y_pred = out[i].ravel()
+        cm = cm + confusion_matrix(y_true, y_pred)
 
     # Size
     h, w = gt[0].shape
 
-    # Plot non-normalized confusion matrix
-    plot_confusion_matrix(cm, w, h, target_names=class_names)
+    # Plot confusion matrix
+    class_names = ['Non-road marker', 'Road marker']
+    plot_confusion_matrix(cm, w, h, new_configstr, target_names=class_names)
 
 def plot_pipeline_performance():
     # 10-FOLD USING 1000 TRAIN/TEST IMAGES
@@ -511,6 +517,7 @@ plot_prediction_img_comparison('./cache_175x350', 'image639', clf='SVM')
 plot_gt_histogram()
 plot_overall_performance()
 plot_acc_vs_gt_fractions('./cache_175x350')
-compute_and_plot_confusion_matrix('./cache_175x350') # 350x700 causes memory error.
+compute_and_plot_confusion_matrix('./cache_350x700', clf='SVM')
+compute_and_plot_confusion_matrix('./cache_350x700', clf='XGBoost')
 compare_classifiers_performance()
 plot_pipeline_performance()
