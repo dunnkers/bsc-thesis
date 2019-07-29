@@ -47,7 +47,7 @@ GT_TRANSFORM    = 'img_as_bool'
 ## Variable
 MAX_SAMPLES     = 200   # Max. samples per class.
 N_FOLDS         = 10    # How many folds for k-fold. The `n_splits` parameter.
-CLASSIFIER      = 'SVM'
+CLASSIFIER      = 'XGBoost'
                         # Can be either: ('SVM' or 'XGBoost').
 FEATURE_VECTOR  = '5-ELEMENT'
                         # Can be either: ('2-ELEMENT' OR '5-ELEMENT')

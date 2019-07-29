@@ -6,6 +6,7 @@ from time import time
 
 import numpy as np
 from joblib import dump, load
+from skimage.exposure import rescale_intensity
 from skimage.io import imread_collection
 from skimage.util import img_as_bool
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -135,6 +136,15 @@ def transform_fold(transformers, split, gt_arr, sv_arr, usv_arr, src_arr=[]):
 
     # Construct feature vector
     if len(src_arr > 0): # 5-element feature vector
+        # rescale usv values
+        def stretch(im):
+            if len(im) == 0: # its gt only had dark pixels or something..
+                return im
+            else:
+                return rescale_intensity(im)
+
+        usv_train = list(map(stretch, usv_train))
+
         train_feature_vector = (np.hstack(sv_train), np.hstack(usv_train),
             np.hstack(src_train_r), np.hstack(src_train_g), np.hstack(src_train_b))
     else: # 2-element feature vector
@@ -162,6 +172,9 @@ def transform_fold(transformers, split, gt_arr, sv_arr, usv_arr, src_arr=[]):
 
     # Construct feature vector
     if len(src_arr > 0): # 5-element feature vector
+        # rescale usv values
+        usv_test = list(map(rescale_intensity, usv_test))
+
         test_feature_vector = (np.hstack(sv_test), np.hstack(usv_test),
             np.hstack(src_test_r), np.hstack(src_test_g), np.hstack(src_test_b))
     else: # 2-element feature vector
