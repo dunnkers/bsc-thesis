@@ -15,8 +15,10 @@ from skimage.util import img_as_bool, img_as_ubyte
 from tqdm.auto import tqdm
 
 from constants import (CACHE_DATA_TYPE, CACHES, DATA_PATH, GT_DATA_GLOB,
-                       GT_TRANSFORM, N_JOBS, SV_DATA_GLOB, USV_DATA_GLOB)
+                       GT_TRANSFORM, N_JOBS, SRC_DATA_GLOB, SV_DATA_GLOB,
+                       USV_DATA_GLOB)
 
+print('IN_DATA_GLOB   =', SRC_DATA_GLOB)
 print('GT_DATA_GLOB   =', GT_DATA_GLOB)
 print('SV_DATA_GLOB   =', SV_DATA_GLOB)
 print('USV_DATA_GLOB  =', USV_DATA_GLOB)
@@ -24,6 +26,7 @@ print('CACHES         = [ {} ]'.format(
    ',\n                   '.join(map(str, CACHES))))
 
 def gt_transform(im):
+    im = rgb2gray(im)
     if (GT_TRANSFORM == 'img_as_bool'):
         return img_as_bool(im)
     elif (GT_TRANSFORM == 'threshold_yen'):
@@ -31,6 +34,9 @@ def gt_transform(im):
     else:
         raise NotImplementedError('`{}` tranform for GT not implemented.'
             .format(GT_TRANSFORM))
+
+def sv_usv_transform(im):
+    return rgb2gray(im)
 
 def cache_image(im, path, shape, transform=None):
     """
@@ -50,7 +56,6 @@ def cache_image(im, path, shape, transform=None):
 
         # resize & custom transform
         im = resize(im, shape, mode='reflect', anti_aliasing=True)
-        im = rgb2gray(im)
         if transform:
             im = transform(im)
 
@@ -90,14 +95,18 @@ def cache_all():
     gt  = imread_collection(GT_DATA_GLOB)
     sv  = imread_collection(SV_DATA_GLOB)
     usv = imread_collection(USV_DATA_GLOB)
+    src = imread_collection(SRC_DATA_GLOB)
 
     for i, cache in enumerate(CACHES):
         print('[{}/{}] Writing cache to \'{}\'...'
             .format(i + 1, len(CACHES), cache.path))
         cache_collection(gt, cache,  desc=' Caching  groundtruth',
             transform=gt_transform)
-        cache_collection(sv, cache,  desc=' Caching   supervised')
-        cache_collection(usv, cache, desc=' Caching unsupervised')
+        cache_collection(sv, cache,  desc=' Caching   supervised',
+            transform=sv_usv_transform)
+        cache_collection(usv, cache, desc=' Caching unsupervised',
+            transform=sv_usv_transform)
+        cache_collection(src, cache, desc=' Caching input images')
 
 start = time()
 cache_all()
