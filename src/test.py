@@ -13,15 +13,31 @@ from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import FunctionTransformer
 from tqdm.auto import tqdm
 
-from constants import (CACHES, DUMP_TESTED, DUMP_TRAINED, DUMP_TRANSFORMED,
-                       GT_FOLDERNAME, OUT_FOLDERNAME)
+from constants import (CACHES, COMPUTE_CLASS, COMPUTE_PROBA, DUMP_TESTED,
+                       DUMP_TRAINED, DUMP_TRANSFORMED, GT_FOLDERNAME,
+                       OUT_FOLDERNAME, PROBA_FOLDERNAME)
 
 
 def makeDirIfNotExists(impath):
     if not exists(dirname(impath)):
         makedirs(dirname(impath))
 
-def test_image(clf, X, y, shape, impath_gt):
+def predict_image_proba(clf, X, y, shape, impath_gt):
+    # Predict
+    probabilities = clf.predict_proba(X)
+    probabilities = probabilities[:, 1] # Save positive class probability only
+
+    # Reconstruction
+    im = np.reshape(probabilities, shape)
+
+    # Output
+    impath_out = impath_gt.replace(GT_FOLDERNAME, PROBA_FOLDERNAME)
+    makeDirIfNotExists(impath_out)
+    with catch_warnings(): # prevent contrast warnings.
+        simplefilter("ignore")
+        imsave(impath_out, im, check_contrast=False)
+
+def predict_image(clf, X, y, shape, impath_gt):
     # Predict
     predictions = clf.predict(X) # predictions = np.zeros(np.prod(shape)) # (🧪)
 
@@ -58,9 +74,13 @@ def test_fold(fold, clf, cache, gt_files, i):
         y = y_test_imgs[i]
         gt_idx = test_indexes[i]
         impath_gt = gt_files[gt_idx]
+
+        if COMPUTE_CLASS:
+            accuracy = predict_image(clf, X, y, cache.shape, impath_gt)
+            accuracies.append(accuracy)
         
-        accuracy = test_image(clf, X, y, cache.shape, impath_gt)
-        accuracies.append(accuracy)
+        if COMPUTE_PROBA:
+            predict_image_proba(clf, X, y, cache.shape, impath_gt)
     
     accuracies = np.array(accuracies)
     return accuracies
@@ -85,6 +105,9 @@ def test_cache(cache):
 
         # Detach data from fold: do not dump data.
         del fold['data']
+    
+    if not COMPUTE_CLASS:
+        return
 
     # Compute mean
     # > fold shapes are not guaranteed to be homogeneous. take into account

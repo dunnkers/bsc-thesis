@@ -11,15 +11,15 @@ SV_FOLDERNAME  = 'supervised'
 USV_FOLDERNAME = 'unsupervised/output'
 SRC_FOLDERNAME = 'input'
 
-GT_IMAGENAME  = 'image'
-SV_IMAGENAME  = 'image'
-USV_IMAGENAME = 'output_image'
-SRC_IMAGENAME = 'image'
+GT_IMAGENAME   = 'image'
+SV_IMAGENAME   = 'image'
+USV_IMAGENAME  = 'output_image'
+SRC_IMAGENAME  = 'image'
 
-GT_DATA_GLOB  = join(DATA_PATH, GT_FOLDERNAME,  IMG_GLOB)
-SV_DATA_GLOB  = join(DATA_PATH, SV_FOLDERNAME,  IMG_GLOB)
-USV_DATA_GLOB = join(DATA_PATH, USV_FOLDERNAME, IMG_GLOB)
-SRC_DATA_GLOB = join(DATA_PATH, SRC_FOLDERNAME, IMG_GLOB)
+GT_DATA_GLOB   = join(DATA_PATH, GT_FOLDERNAME,  IMG_GLOB)
+SV_DATA_GLOB   = join(DATA_PATH, SV_FOLDERNAME,  IMG_GLOB)
+USV_DATA_GLOB  = join(DATA_PATH, USV_FOLDERNAME, IMG_GLOB)
+SRC_DATA_GLOB  = join(DATA_PATH, SRC_FOLDERNAME, IMG_GLOB)
 
 # Caches to save.
 Cache = namedtuple('Cache', ['path', 'shape'])
@@ -43,6 +43,8 @@ N_JOBS          = -1    # Parallelization. Use `-1` for using all CPU cores,
 VERBOSE_LOGGING = False # Log extra messages during training
 GT_TRANSFORM    = 'img_as_bool'
                         # Can be either: ('img_as_bool' or 'threshold_yen')
+COMPUTE_PROBA   = True  # Compute and store probabilities images during testing
+COMPUTE_CLASS   = False  # Compute and store predicted class images during testing
 
 ## Variable
 MAX_SAMPLES     = 200   # Max. samples per class.
@@ -65,6 +67,7 @@ DUMP_TESTED      = "{},tested.joblib".format(CONFIG_STR)
 
 # Images output folder
 OUT_FOLDERNAME   = '{},output'.format(CONFIG_STR)
+PROBA_FOLDERNAME = '{},proba'.format(CONFIG_STR)
 
 # Visualization output folder
 VISUALS_FOLDERPATH = '../bsc-thesis-report/img/'
