@@ -210,11 +210,10 @@ def transform_cache(cache):
     # Read sv/usv
     sv  = imread_collection(sv_glob)
     usv = imread_collection(usv_glob)
-    src = imread_collection(src_glob) if FEATURE_VECTOR == '5-ELEMENT' else None
+    src = imread_collection(src_glob) if FEATURE_VECTOR == '5-ELEMENT' else []
 
     # Assert size
-    assert(np.size(gt.files) == np.size(sv.files) == np.size(usv.files)
-                             == np.size(src.files))
+    assert(np.size(gt.files) == np.size(sv.files) == np.size(usv.files))
     if FEATURE_VECTOR == '5-ELEMENT':
         assert(np.size(usv.files) == np.size(src.files))
 
@@ -240,7 +239,7 @@ def transform_cache(cache):
     gt_arr  = np.array(gt)
     sv_arr  = np.array(sv)
     usv_arr = np.array(usv)
-    src_arr = np.array(src) if FEATURE_VECTOR == '5-ELEMENT' else None
+    src_arr = np.array(src)
     end = time()
     print(' Converted to arrays in {}'.format(timedelta(seconds=end - start)))
 
