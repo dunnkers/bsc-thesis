@@ -28,6 +28,8 @@ from constants import (CACHES, CONFIG_STR, CONFIG_STR_NOCLF, DATA_PATH,
 
 
 def compute_and_plot_ic_AUCROC(y_true, y_score, ic_name, title='AUC/ROC Curve'):
+    """ Compute and plot AUC scores and the ROC curve for this specific
+        image collection. """
     print(' Computing {} AUC score / ROC curve...'.format(ic_name))
     start = time()
 
@@ -36,6 +38,13 @@ def compute_and_plot_ic_AUCROC(y_true, y_score, ic_name, title='AUC/ROC Curve'):
     print('  AUC: %.3f' % auc)
     # calculate roc curve
     fpr, tpr, _ = roc_curve(y_true, y_score)
+    print('  ROC curve size: {}'.format(len(fpr)))
+    if len(fpr) > 10000: # Sample when curve has *a lot* of data-points
+        # Take every other 50th data-point. Reduce size by factor 50.0
+        fpr = fpr[0:len(fpr):50]
+        tpr = tpr[0:len(tpr):50]
+
+        print('  → sampled roc curve to {} data-points'.format(len(fpr)))
 
     end = time()
     print('  Computed in {}'.format(timedelta(seconds=end - start)))
@@ -66,6 +75,7 @@ def makeDirIfNotExists(impath):
         makedirs(dirname(impath))
 
 def compute_and_plot_cache_AUCROC(cache):
+    """ Compute and plot AUC scores and the ROC curve for `cache`. """
     # Read ground truth images.
     gt_glob = join(cache.path, GT_FOLDERNAME, IMG_GLOB)
     gt = imread_collection(gt_glob)
@@ -101,6 +111,7 @@ def compute_and_plot_cache_AUCROC(cache):
         title='Fusion AUC score/ROC curve')
 
 def compute_and_plot_all_AUCROC():
+    """ Compute and plot AUC scores and the ROC curve for all caches. """
     for i, cache in enumerate(CACHES):
         print('[{}/{}] Computing cache \'{}\' AUC/ROC...'
             .format(i + 1, len(CACHES), cache.path))
