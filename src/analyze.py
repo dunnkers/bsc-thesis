@@ -71,9 +71,6 @@ def ic2binary(ic):
 def ic2probabilities(ic):
     return np.array([img_as_float(im) for im in ic]).ravel()
 
-# def ic2restretchedic(ic):
-#     return np.array([rescale_intensity(im) for im in ic]).ravel()
-
 def makeDirIfNotExists(impath):
     if not exists(dirname(impath)):
         makedirs(dirname(impath))
@@ -89,11 +86,14 @@ def compute_and_plot_cache_AUCROC(cache):
                     .replace(GT_IMAGENAME,  SV_IMAGENAME)  for path in gt.files]
     usv_glob = [path.replace(GT_FOLDERNAME, USV_FOLDERNAME)
                     .replace(GT_IMAGENAME,  USV_IMAGENAME) for path in gt.files]
+    usv_stretched_glob = [path.replace(GT_FOLDERNAME, 'unsupervised_stretched/output')
+                    .replace(GT_IMAGENAME,  USV_IMAGENAME) for path in gt.files]
     fsd_glob = [path.replace(GT_FOLDERNAME, PROBA_FOLDERNAME)
                                                            for path in gt.files]
     # Read sv/usv
     sv  = imread_collection(sv_glob)
     usv = imread_collection(usv_glob)
+    usv_stretched = imread_collection(usv_stretched_glob)
     fsd = imread_collection(fsd_glob)
 
     # groundtruth
@@ -114,11 +114,11 @@ def compute_and_plot_cache_AUCROC(cache):
         'cache={}x{},ic=unsupervised'.format(w, h),
         title='Unsupervised AUC score/ROC curve')
 
-    # # unsupervised - contrast stretched
-    # usv_prob_stretched = ic2probabilities(ic2restretchedic(usv))
-    # compute_and_plot_ic_AUCROC(gt_bin, usv_prob_stretched, 'unsupervised_stretched', 
-    #     'cache={}x{},ic=unsupervised_stretched'.format(w, h),
-    #     title='Unsupervised AUC score/ROC curve (constrast stretched)')
+    # unsupervised - contrast stretched
+    usv_prob_stretched = ic2probabilities(usv_stretched)
+    compute_and_plot_ic_AUCROC(gt_bin, usv_prob_stretched, 'unsupervised_stretched', 
+        'cache={}x{},ic=unsupervised_stretched'.format(w, h),
+        title='Unsupervised AUC score/ROC curve (constrast stretched)')
 
     # fusion
     fsd_prob = ic2probabilities(fsd)
