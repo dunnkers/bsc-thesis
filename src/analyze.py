@@ -1,15 +1,14 @@
 #%%
-from os.path import basename, exists, join
-from time import time
-
-import numpy as np
 from datetime import timedelta
-import pandas as pd
 from os import makedirs
 from os.path import basename, dirname, exists, join
+from time import time
+from warnings import catch_warnings, simplefilter
+
+import numpy as np
+import pandas as pd
 import seaborn as sns
 from joblib import dump, load
-from warnings import catch_warnings, simplefilter
 from matplotlib import gridspec
 from matplotlib import pyplot as plt
 from scipy import stats
@@ -20,11 +19,12 @@ from sklearn.metrics import roc_auc_score, roc_curve
 from tqdm.auto import tqdm
 
 from constants import (CACHES, CONFIG_STR, CONFIG_STR_NOCLF, DATA_PATH,
-                       DUMP_TESTED, DUMP_TRAINED, GT_DATA_GLOB, GT_FOLDERNAME,
-                       GT_IMAGENAME, IMG_GLOB, N_FOLDS, OUT_FOLDERNAME,
+                       DUMP_TESTED, DUMP_TRAINED, DUMP_TRANSFORMED,
+                       GT_DATA_GLOB, GT_FOLDERNAME, GT_IMAGENAME, IMG_GLOB,
+                       N_FOLDS, OUT_FOLDERNAME, PROBA_FOLDERNAME,
                        SV_FOLDERNAME, SV_IMAGENAME, USV_FOLDERNAME,
                        USV_IMAGENAME, VISUALS_CONFIG_STR, VISUALS_FOLDERPATH,
-                       DUMP_TRANSFORMED, Cache, PROBA_FOLDERNAME)
+                       Cache)
 
 
 def compute_and_plot_ic_AUCROC(y_true, y_score, ic_name,
@@ -71,6 +71,9 @@ def ic2binary(ic):
 def ic2probabilities(ic):
     return np.array([img_as_float(im) for im in ic]).ravel()
 
+# def ic2restretchedic(ic):
+#     return np.array([rescale_intensity(im) for im in ic]).ravel()
+
 def makeDirIfNotExists(impath):
     if not exists(dirname(impath)):
         makedirs(dirname(impath))
@@ -110,6 +113,12 @@ def compute_and_plot_cache_AUCROC(cache):
     compute_and_plot_ic_AUCROC(gt_bin, usv_prob, 'unsupervised', 
         'cache={}x{},ic=unsupervised'.format(w, h),
         title='Unsupervised AUC score/ROC curve')
+
+    # # unsupervised - contrast stretched
+    # usv_prob_stretched = ic2probabilities(ic2restretchedic(usv))
+    # compute_and_plot_ic_AUCROC(gt_bin, usv_prob_stretched, 'unsupervised_stretched', 
+    #     'cache={}x{},ic=unsupervised_stretched'.format(w, h),
+    #     title='Unsupervised AUC score/ROC curve (constrast stretched)')
 
     # fusion
     fsd_prob = ic2probabilities(fsd)
