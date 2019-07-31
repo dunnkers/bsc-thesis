@@ -27,7 +27,8 @@ from constants import (CACHES, CONFIG_STR, CONFIG_STR_NOCLF, DATA_PATH,
                        DUMP_TRANSFORMED, Cache, PROBA_FOLDERNAME)
 
 
-def compute_and_plot_ic_AUCROC(y_true, y_score, ic_name, title='AUC/ROC Curve'):
+def compute_and_plot_ic_AUCROC(y_true, y_score, ic_name,
+    filename, title='AUC/ROC Curve'):
     """ Compute and plot AUC scores and the ROC curve for this specific
         image collection. """
     print(' Computing {} AUC score / ROC curve...'.format(ic_name))
@@ -58,7 +59,7 @@ def compute_and_plot_ic_AUCROC(y_true, y_score, ic_name, title='AUC/ROC Curve'):
 
     # Save
     plt.savefig(join(VISUALS_FOLDERPATH, '{}-aucroc.svg'
-        .format(ic_name)))
+        .format(filename)))
     plt.clf()
 
 def im2binary(im):
@@ -95,19 +96,25 @@ def compute_and_plot_cache_AUCROC(cache):
     # groundtruth
     gt_bin   = ic2binary(gt) # in binary: [0, 1]
 
+    # Cache sizes
+    h, w = cache.shape
+
     # supervised
     sv_prob  = ic2probabilities(sv)
     compute_and_plot_ic_AUCROC(gt_bin, sv_prob, 'supervised', 
+        'cache={}x{},ic=supervised'.format(w, h),
         title='Supervised AUC score/ROC curve')
 
     # unsupervised
     usv_prob = ic2probabilities(usv)
     compute_and_plot_ic_AUCROC(gt_bin, usv_prob, 'unsupervised', 
+        'cache={}x{},ic=unsupervised'.format(w, h),
         title='Unsupervised AUC score/ROC curve')
 
     # fusion
     fsd_prob = ic2probabilities(fsd)
     compute_and_plot_ic_AUCROC(gt_bin, fsd_prob, 'fusion', 
+        '{},cache={}x{},ic=fusion'.format(CONFIG_STR, w, h),
         title='Fusion AUC score/ROC curve')
 
 def compute_and_plot_all_AUCROC():
