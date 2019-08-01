@@ -24,14 +24,14 @@ SRC_DATA_GLOB  = join(DATA_PATH, SRC_FOLDERNAME, IMG_GLOB)
 # Caches to save.
 Cache = namedtuple('Cache', ['path', 'shape'])
 CACHES = [
-    # Cache('./cache_35x70',      (70, 35)),    # 1/20 downscale
-    # Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
-    # Cache('./cache_70x140',    (140, 70)),    # 1/10 downscale
+    Cache('./cache_35x70',      (70, 35)),    # 1/20 downscale
+    Cache('./cache_50x100',    (100, 50)),    # 1/14 downscale
+    Cache('./cache_70x140',    (140, 70)),    # 1/10 downscale
     Cache('./cache_100x200',  (200, 100)),    # 1/7. downscale
-    # Cache('./cache_140x280',  (280, 140)),    # 1/5. downscale
-    # Cache('./cache_175x350',  (350, 175)),    # 1/4. downscale
-    # Cache('./cache_350x700',  (700, 350)),    # 1/2. downscale
-    # Cache('./cache_525x1050', (1050, 525))    # 3/4. downscale
+    Cache('./cache_140x280',  (280, 140)),    # 1/5. downscale
+    Cache('./cache_175x350',  (350, 175)),    # 1/4. downscale
+    Cache('./cache_350x700',  (700, 350)),    # 1/2. downscale
+    Cache('./cache_525x1050', (1050, 525))    # 3/4. downscale
 ]
 
 ### Configuration
@@ -44,7 +44,7 @@ VERBOSE_LOGGING = False # Log extra messages during training
 GT_TRANSFORM    = 'img_as_bool'
                         # Can be either: ('img_as_bool' or 'threshold_yen')
 COMPUTE_PROBA   = True  # Compute and store probabilities images during testing
-COMPUTE_CLASS   = False  # Compute and store predicted class images during testing
+COMPUTE_CLASS   = True  # Compute and store predicted class images during testing
 
 ## Variable
 MAX_SAMPLES     = 200   # Max. samples per class.
