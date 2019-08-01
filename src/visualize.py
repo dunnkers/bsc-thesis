@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from joblib import dump, load
-from matplotlib import gridspec, pyplot as plt
+from matplotlib import gridspec
+from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
 from scipy import stats
 from skimage.color import rgb2gray
@@ -16,13 +17,16 @@ from sklearn.metrics import confusion_matrix
 from tqdm.auto import tqdm
 
 from constants import (CACHES, CONFIG_STR, CONFIG_STR_NOCLF, DATA_PATH,
-                       DUMP_TESTED, GT_DATA_GLOB, GT_FOLDERNAME, GT_IMAGENAME,
-                       IMG_GLOB, N_FOLDS, OUT_FOLDERNAME, SV_FOLDERNAME,
-                       SV_IMAGENAME, USV_FOLDERNAME, USV_IMAGENAME,
-                       VISUALS_CONFIG_STR, VISUALS_FOLDERPATH)
+                       DUMP_TESTED, FEATURE_VECTOR, GT_DATA_GLOB,
+                       GT_FOLDERNAME, GT_IMAGENAME, IMG_GLOB, N_FOLDS,
+                       OUT_FOLDERNAME, SV_FOLDERNAME, SV_IMAGENAME,
+                       USV_FOLDERNAME, USV_IMAGENAME, VISUALS_CONFIG_STR,
+                       VISUALS_FOLDERPATH)
 
 
 def getConfigStr(clf):
+    """ Produce exactly the same config str as in constants, but then in a
+        method such that a custom classifier can be used. """
     configstr = '{},clf={}'.format(CONFIG_STR_NOCLF, clf)
     outfolder = '{},output'.format(configstr)
     visualstr = 'folds={}, clf={}'.format(N_FOLDS, clf)

@@ -12,6 +12,7 @@ from skimage.filters import threshold_yen
 from skimage.io import imread_collection, imsave
 from skimage.transform import resize
 from skimage.util import img_as_bool, img_as_ubyte
+from skimage.exposure import rescale_intensity
 from tqdm.auto import tqdm
 
 from constants import (CACHE_DATA_TYPE, CACHES, DATA_PATH, GT_DATA_GLOB,
@@ -37,6 +38,9 @@ def gt_transform(im):
 
 def sv_usv_transform(im):
     return rgb2gray(im)
+
+def usv_stretched_transform(im):
+    return rescale_intensity(rgb2gray(im))
 
 def cache_image(im, path, shape, transform=None):
     """
@@ -106,6 +110,7 @@ def cache_all():
             transform=sv_usv_transform)
         cache_collection(usv, cache, desc=' Caching unsupervised',
             transform=sv_usv_transform)
+            #transform=usv_stretched_transform) # option to stretch contrast.
         cache_collection(src, cache, desc=' Caching input images')
 
 start = time()
